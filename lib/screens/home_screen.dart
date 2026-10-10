@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kisekae/screens/getting_started.dart';
+import 'package:kisekae/screens/products_list.dart';
 import 'package:kisekae/screens/search.dart';
 import 'package:kisekae/services/email_auth.dart';
+import 'package:kisekae/widgets/bottom_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -96,96 +98,38 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Categories',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                   ),
-                  Icon(Icons.arrow_forward),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ProductsListScreen()),
+                      );
+                    },
+                    icon: Icon(Icons.arrow_forward),
+                  ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Row(
                 children: [
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8D8C4),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFDBBEC3),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.checkroom,
-                          size: 22,
-                          color: Color(0xFF3B2A25),
-                        ),
-                      ),
-                    ),
+                  _CategoryImage(
+                    imageUrl: 'assets/images/clothes/4.jpg',
+                    alignment: Alignment.topCenter,
+                    label: 'Women',
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8D8C4),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFDBBEC3),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.checkroom,
-                          size: 22,
-                          color: Color(0xFF3B2A25),
-                        ),
-                      ),
-                    ),
+                  _CategoryImage(
+                    imageUrl: 'assets/images/clothes/7.jpg',
+                    alignment: Alignment.topCenter,
+                    label: 'Men',
                   ),
-                  const SizedBox(width: 8),
-
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8D8C4),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFDBBEC3),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.checkroom,
-                          size: 22,
-                          color: Color(0xFF3B2A25),
-                        ),
-                      ),
-                    ),
+                  _CategoryImage(
+                    imageUrl: 'assets/images/clothes/5.jpg',
+                    alignment: Alignment.topCenter,
+                    label: 'Kids',
                   ),
-                  const SizedBox(width: 8),
-
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8D8C4),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFDBBEC3),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.checkroom,
-                          size: 22,
-                          color: Color(0xFF3B2A25),
-                        ),
-                      ),
-                    ),
+                  _CategoryImage(
+                    imageUrl: 'assets/images/clothes/6.jpg',
+                    alignment: Alignment(0, -0.5),
+                    label: 'Formals',
                   ),
                 ],
               ),
@@ -197,7 +141,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Continue Shopping For',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                   ),
-                  Icon(Icons.arrow_forward),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ProductsListScreen()),
+                      );
+                    },
+                    icon: Icon(Icons.arrow_forward),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -205,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Expanded(
                     child: ProductCard(
-                      imageUrl: 'assets/images/cloth_1.jpg',
+                      imageUrl: 'assets/images/clothes/8.jpg',
                       title: 'floral top',
                       rating: 3.9,
                       price: 375,
@@ -215,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ProductCard(
-                      imageUrl: 'assets/images/cloth_2.jpg',
+                      imageUrl: 'assets/images/clothes/6.jpg',
                       title: 'tailored blazer',
                       rating: 4.5,
                       price: 705,
@@ -232,7 +183,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Best Deals',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
                   ),
-                  Icon(Icons.arrow_forward),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ProductsListScreen(),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.arrow_forward),
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -240,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Expanded(
                     child: ProductCard(
-                      imageUrl: 'assets/images/cloth_3.jpg',
+                      imageUrl: 'assets/images/clothes/7.jpg',
                       title: 'tailored blazer',
                       rating: 4.5,
                       price: 705,
@@ -250,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: ProductCard(
-                      imageUrl: 'assets/images/cloth_4.jpg',
+                      imageUrl: 'assets/images/clothes/9.jpg',
                       title: 'tailored blazer',
                       rating: 4.5,
                       price: 705,
@@ -263,26 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.home_filled),
-            label: 'HOME',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.category),
-            label: 'CATEGORIES',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.shopping_cart),
-            label: 'CART',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.person_rounded),
-            label: 'PROFILE',
-          ),
-        ],
-      ),
+      bottomNavigationBar: BottomBar(),
     );
   }
 
@@ -365,6 +306,47 @@ class ProductCard extends StatelessWidget {
           Text(
             '₹$price',
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryImage extends StatelessWidget {
+  final String imageUrl;
+  final Alignment alignment;
+  final String label;
+  const _CategoryImage({
+    required this.imageUrl,
+    required this.alignment,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 27,
+            backgroundColor: const Color(0xFFDBBEC3),
+            child: ClipOval(
+              child: Image.asset(
+                imageUrl,
+                width: 52,
+                height: 52,
+                fit: BoxFit.cover,
+                alignment: alignment,
+              ),
+            ),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kisekae/screens/getting_started.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kisekae/screens/onboarding_screen.dart';
+import 'package:kisekae/services/dio.dart';
 
 void main() async {
   await dotenv.load();
