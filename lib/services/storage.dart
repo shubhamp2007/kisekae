@@ -44,7 +44,5 @@ class CookieStorage implements Storage {
   }
 
   @override
-  Future<void> init(bool persistSession, bool ignoreExpires) {
-    throw UnimplementedError();
-  }
+  Future<void> init(bool persistSession, bool ignoreExpires) async {}
 }
