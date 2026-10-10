@@ -7,7 +7,8 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
-import 'package:kisekae/services/token_storage.dart';
+import 'package:kisekae/services/dio.dart';
+import 'package:kisekae/services/storage.dart';
 
 class AuthResponse {
   final bool success;
@@ -18,26 +19,7 @@ class AuthResponse {
 }
 
 class SocialAuth {
-  final Dio dio = Dio(BaseOptions(baseUrl: dotenv.get('BASE_URL')))
-    ..interceptors.add(
-      InterceptorsWrapper(
-        onError: (DioException error, ErrorInterceptorHandler handler) async {
-          final hadAuthHeader = error.requestOptions.headers.containsKey(
-            'Authorization',
-          );
-          if (error.response?.statusCode == 401 && hadAuthHeader) {
-            print("Session Expired. Logging Out...");
-            await TokenStorage().deleteAll();
-            return handler.next(error);
-          }
-          if (error.response?.statusCode == 500) {
-            print("Server Error");
-          }
-          return handler.next(error);
-        },
-      ),
-    );
-
+  final Dio dio = DioClient.dio;
   final TokenStorage _tokenStorage = TokenStorage();
 
   Future<AuthResponse> signInWithGoogle() {
@@ -153,8 +135,8 @@ class SocialAuth {
       },
     );
 
-    if (!await _saveTokens(response.headers)) {
-      return AuthResponse(false, "Tokens missing from response headers.");
+    if (!await _saveToken(response.data)) {
+      return AuthResponse(false, "Token missing from body.");
     }
     return AuthResponse(
       true,
@@ -183,26 +165,13 @@ class SocialAuth {
       base64UrlEncode(sha256.convert(utf8.encode(verifier)).bytes)
           .replaceAll('=', '');
 
-  Future<bool> _saveTokens(Headers headers) async {
-    final authHeader = headers.value('authorization');
-    final refreshToken = headers.value('x-refresh-token');
-
-    if (authHeader == null || refreshToken == null) {
+  Future<bool> _saveToken(Map<String, dynamic> body) async {
+    final String accessToken = body['data']['access'];
+    if (accessToken.isEmpty) {
       return false;
     }
 
-    final accessToken = authHeader.toLowerCase().startsWith('bearer ')
-        ? authHeader.substring(7).trim()
-        : authHeader.trim();
-
-    if (accessToken.isEmpty || refreshToken.isEmpty) {
-      return false;
-    }
-
-    await _tokenStorage.write(
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-    );
+    await _tokenStorage.write(accessToken);
 
     return true;
   }

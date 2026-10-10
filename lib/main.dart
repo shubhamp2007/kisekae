@@ -5,7 +5,9 @@ import 'package:kisekae/screens/onboarding_screen.dart';
 import 'package:kisekae/services/dio.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load();
+  await DioClient.init();
   runApp(const MyApp());
 }
 
