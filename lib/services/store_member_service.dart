@@ -44,6 +44,12 @@ class StoreMembers extends BaseRepository {
     });
   }
 
+  Future<void> leaveStore(int storeId) async {
+    return execute(() async {
+      await _dio.post('/stores/$storeId/leave/');
+    });
+  }
+
   Future<Store> transferOwnership(int storeId, int memberId) async {
     return execute(() async {
       final response = await _dio.post(

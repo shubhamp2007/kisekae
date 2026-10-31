@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/store_member.dart';
+import 'package:kisekae/screens/seller_gate_screen.dart';
 import 'package:kisekae/screens/seller_invite.dart';
 import 'package:kisekae/screens/send_invite.dart';
-
 import 'package:kisekae/services/store.dart';
 import 'package:kisekae/services/store_member_service.dart';
 
@@ -25,8 +25,11 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
   bool _loading = true;
   String? _error;
   int? _busyId;
+  bool _leaving = false;
 
   bool get _isOwner => _myRole.toUpperCase() == 'OWNER';
+
+  bool get _isManager => _myRole.toUpperCase() == 'MANAGER';
 
   @override
   void initState() {
@@ -177,6 +180,180 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
     }, 'Ownership transferred to ${member.displayName}');
   }
 
+  List<StoreMember> get _transferCandidates =>
+      _members.where((member) => member.isManager).toList();
+
+  void _goToGate() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const SellerGateScreen()),
+      (route) => false,
+    );
+  }
+
+  Future<void> _leaveStore() async {
+    if (_leaving || _busyId != null) return;
+    if (_isOwner) {
+      await _leaveAsOwner();
+    } else {
+      await _leaveAsManager();
+    }
+  }
+
+  Future<void> _leaveAsManager() async {
+    final confirmed = await _confirm(
+      title: 'Leave this store?',
+      message: 'You will lose access to this store\'s products, orders and team. You can only rejoin if the owner invites you again.',
+      confirmLabel: 'Leave',
+    );
+    if (!confirmed || !mounted) return;
+
+    setState(() => _leaving = true);
+    try {
+      await _repository.leaveStore(widget.storeId);
+      if (!mounted) return;
+      _showMessage('You left the store');
+      _goToGate();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showMessage(e.message, error: true);
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage('Something went wrong. Please try again', error: true);
+    } finally {
+      if (mounted) setState(() => _leaving = false);
+    }
+  }
+
+  Future<void> _leaveAsOwner() async {
+    final candidates = _transferCandidates;
+    if (candidates.isEmpty) {
+      await _showNoSuccessorDialog();
+      return;
+    }
+
+    final newOwner = await _pickNewOwner(candidates);
+    if (newOwner == null || !mounted) return;
+
+    final confirmed = await _confirm(
+      title: 'Transfer ownership and leave?',
+      message:
+          '${newOwner.displayName} will become the owner of this store and you will leave it. You will lose access to its products, orders and team.',
+      confirmLabel: 'Transfer & leave',
+    );
+    if (!confirmed || !mounted) return;
+
+    setState(() => _leaving = true);
+    var transferred = false;
+    try {
+      await _repository.transferOwnership(widget.storeId, newOwner.id);
+      transferred = true;
+      await _repository.leaveStore(widget.storeId);
+      if (!mounted) return;
+      _showMessage('Ownership transferred and you left the store');
+      _goToGate();
+    } on ApiException catch (e) {
+      _onOwnerLeaveFailed(e.message, transferred);
+    } catch (_) {
+      _onOwnerLeaveFailed(
+        'Something went wrong. Please try again',
+        transferred,
+      );
+    } finally {
+      if (mounted) setState(() => _leaving = false);
+    }
+  }
+
+  void _onOwnerLeaveFailed(String message, bool transferred) {
+    if (!mounted) return;
+    if (transferred) {
+      setState(() => _myRole = 'MANAGER');
+      _showMessage(
+        'Ownership was transferred, but leaving failed: $message. You can leave from this screen.',
+        error: true,
+      );
+      _load(showSpinner: false);
+    } else {
+      _showMessage(message, error: true);
+    }
+  }
+
+  Future<void> _showNoSuccessorDialog() async {
+    final invite = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Transfer ownership first'),
+        content: const Text(
+          'As the owner, you can\'t leave until another member takes over. You don\'t have any managers yet. Invite someone, and once they join you can transfer ownership and leave.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Invite members'),
+          ),
+        ],
+      ),
+    );
+    if (invite == true && mounted) _openSendInvite();
+  }
+
+  Future<StoreMember?> _pickNewOwner(List<StoreMember> candidates) {
+    StoreMember? selected;
+
+    return showDialog<StoreMember>(
+      context: context,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            title: const Text('Choose the new owner'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final member in candidates)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        selected?.id == member.id
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_unchecked,
+                        color: cs.primary,
+                      ),
+                      title: Text(member.displayName),
+                      subtitle:
+                          member.email.isNotEmpty &&
+                              member.email != member.displayName
+                          ? Text(member.email)
+                          : null,
+                      onTap: () => setDialogState(() => selected = member),
+                    ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: selected == null
+                    ? null
+                    : () => Navigator.pop(ctx, selected),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _openSendInvite() async {
     await Navigator.push(
       context,
@@ -245,7 +422,7 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
             member: member,
             showActions: actionable,
             busy: _busyId == member.id,
-            disabled: _busyId != null,
+            disabled: _busyId != null || _leaving,
             onRemove: () => _remove(member),
             onTransfer: () => _transferOwnership(member),
           ),
@@ -352,6 +529,46 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
               ),
               const SizedBox(height: 10),
               _membersSection(cs),
+              if ((_isOwner || _isManager) && !_loading) ...[
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: OutlinedButton.icon(
+                    onPressed: _leaving ? null : _leaveStore,
+                    icon: _leaving
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: cs.error,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.logout, size: 20),
+                    label: const Text('Leave store'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: cs.error,
+                      side: BorderSide(color: cs.error),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                if (_isOwner)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'As the owner, you will choose a new owner before leaving.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurface.withOpacity(0.65),
+                      ),
+                    ),
+                  ),
+              ],
             ],
           ),
         ),
