@@ -23,6 +23,8 @@ import 'package:kisekae/services/similar_product_service.dart';
 import 'package:kisekae/services/tryon_service.dart';
 import 'package:kisekae/services/wishlist_service.dart';
 import 'package:kisekae/widgets/add_to_combo.dart';
+import 'package:kisekae/widgets/review_chatbar.dart';
+import 'package:kisekae/widgets/review_summary.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final int productId;
@@ -1054,6 +1056,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 ],
                 _recommendedCombosSection(),
                 _similarSection(),
+
+                ReviewSummarySection(productId: product.id),
+                ReviewChatBar(productId: product.id, inline: true),
 
                 const Text(
                   "Ratings & Review",
