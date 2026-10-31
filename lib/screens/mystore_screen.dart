@@ -679,7 +679,8 @@ class _StoreProductCard extends StatelessWidget {
     final url = (p.thumbnail?.isNotEmpty ?? false)
         ? p.thumbnail
         : ((p.imageUrl?.isNotEmpty ?? false) ? p.imageUrl : null);
-    final rating = (p.reviewCount ?? 0) > 0 ? p.averageRating : null;
+    final rating = p.averageRating ?? 0.0;
+    final hasRating = rating > 0;
 
     final placeholder = Container(
       color: const Color(0xFFE4D6D0),
@@ -724,18 +725,22 @@ class _StoreProductCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (rating != null) ...[
-              const Icon(Icons.star, size: 13, color: Colors.amber),
-              const SizedBox(width: 2),
-              Text(
-                rating.toStringAsFixed(1),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: cs.onSurface,
-                ),
+            Icon(
+              Icons.star,
+              size: 13,
+              color: hasRating
+                  ? Colors.amber
+                  : cs.onSurface.withValues(alpha: 0.3),
+            ),
+            const SizedBox(width: 2),
+            Text(
+              rating.toStringAsFixed(1),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: cs.onSurface,
               ),
-            ],
+            ),
           ],
         ),
         Text(

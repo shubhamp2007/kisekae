@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:kisekae/models/auth_response.dart';
 import 'package:kisekae/services/dio.dart';
 import 'package:kisekae/services/storage.dart';
@@ -174,6 +175,12 @@ class EmailAuth {
         await DioClient.clearSession();
       } catch (_) {}
       await _tokenStorage.deleteAll();
+
+      try {
+        await FirebaseMessaging.instance.deleteToken().timeout(
+          const Duration(seconds: 3),
+        );
+      } catch (_) {}
     }
     return AuthResponse(true, message);
   }

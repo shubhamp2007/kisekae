@@ -37,7 +37,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _PaymentMethod('Credit Card', iconAsset: 'assets/icons/creditcard.png'),
     _PaymentMethod('UPI', iconAsset: 'assets/icons/googlepay.png'),
     _PaymentMethod('Pay Pal', iconAsset: 'assets/icons/paypal.png'),
-    _PaymentMethod('Cash on delivery', iconAsset: 'assets/icons/cod.png'),
   ];
 
   final PageController _controller = PageController();
@@ -50,7 +49,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   CheckoutResponse? _result;
 
   int _currentPage = 0;
-  int _selectedMethod = 3;
+  int _selectedMethod = 2;
   bool _isLoadingAddress = true;
   bool _isPlacingOrder = false;
 
@@ -117,7 +116,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return diff > 0 ? diff : 0;
   }
 
-  double get _totalAmount => _subtotal + _platformFee;
+  double get _totalAmount => _subtotal;
 
   String get _deliveryText {
     final date = DateTime.now().add(
@@ -634,7 +633,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _priceSummary() {
     final rows = [
       ['MRP', '₹${_mrpTotal.toInt()}'],
-      ['Platform fee', '₹${_platformFee.toInt()}'],
       ['Discounts', '-₹${_discountTotal.toInt()}'],
       ['Total amount', '₹${_totalAmount.toInt()}'],
     ];

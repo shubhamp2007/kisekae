@@ -11,6 +11,7 @@ import 'package:kisekae/screens/subcategories/mens.dart';
 import 'package:kisekae/screens/subcategories/womens.dart';
 import 'package:kisekae/screens/wishlist_screen.dart';
 import 'package:kisekae/services/dio.dart';
+import 'package:kisekae/services/profile_details.dart';
 import 'package:kisekae/widgets/best_deals.dart';
 import 'package:kisekae/widgets/bottom_bar.dart';
 import 'package:kisekae/widgets/searchbar.dart';

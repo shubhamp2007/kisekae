@@ -45,8 +45,6 @@ class CheckoutService extends BaseRepository {
     });
   }
 
-  /// Verifies the Razorpay payment signature with the backend.
-  /// On success, the order transitions from PENDING → CONFIRMED.
   Future<void> verifyPayment({
     required int orderId,
     required String razorpayPaymentId,

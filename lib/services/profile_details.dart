@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'package:dio/dio.dart';
 import 'package:kisekae/models/fcm_device.dart';
 import 'package:kisekae/models/userprofile.dart';
@@ -77,6 +79,7 @@ class ProfileDetails extends BaseRepository {
           'device_name': deviceName,
         },
       );
+      print(response);
 
       final body = Map<String, dynamic>.from(response.data as Map);
       final deviceData = Map<String, dynamic>.from(body['data'] as Map);
@@ -101,10 +104,20 @@ class ProfileDetails extends BaseRepository {
 
       await registerDevice(
         registrationToken: newToken,
-        deviceType: Platform.isIOS ? 'ios' : 'android',
+        deviceType: Platform.isIOS ? 'IOS' : 'ANDROID',
       );
     } catch (e) {
       debugPrint('Failed to sync refreshed FCM token: $e');
+    }
+  }
+
+  Future<void> registerCurrentFCMToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.isEmpty) return;
+      await updateFCMToken(token);
+    } catch (e) {
+      debugPrint('Failed to register FCM token on login: $e');
     }
   }
 }

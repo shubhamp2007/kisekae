@@ -1473,15 +1473,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Widget _similarCard(SimilarProduct p) {
-    const primaryColor = Color(0xFF8B2E3E);
     final symbol = _currencySymbol(p.currency);
-    final price = double.tryParse(p.price);
-    final compare = double.tryParse(p.compareAtPrice ?? '');
-    final discount = (price != null && compare != null && compare > price)
-        ? (((compare - price) / compare) * 100).round()
-        : null;
+    final hasStore = p.storeName.trim().isNotEmpty;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ProductDetailsScreen(productId: p.id),
@@ -1492,119 +1488,69 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
+            Container(
+              height: 180,
+              width: 150,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: const Color(0xFFE0D8CD),
+              ),
+              child: p.imageUrl == null
+                  ? _imagePlaceholder()
+                  : Image.network(
+                      p.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                    ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Container(
-                  height: 180,
-                  width: 150,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0D8CD),
-                    borderRadius: BorderRadius.circular(20),
+                Expanded(
+                  child: Text(
+                    hasStore ? p.storeName : p.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: hasStore ? FontWeight.w500 : FontWeight.w400,
+                      color: hasStore ? Colors.black : Colors.black54,
+                    ),
                   ),
-                  child: p.imageUrl == null
-                      ? _imagePlaceholder()
-                      : Image.network(
-                          p.imageUrl!,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
-                          errorBuilder: (_, __, ___) => _imagePlaceholder(),
-                        ),
                 ),
-                if (discount != null)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        "$discount% off",
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                const SizedBox(width: 6),
+                const Icon(Icons.star, size: 16, color: Colors.amber),
+                const SizedBox(width: 2),
+                Text(
+                  p.averageRating.toStringAsFixed(1),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
-                if (p.reviewCount > 0)
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star, size: 12, color: Colors.amber),
-                          const SizedBox(width: 2),
-                          Text(
-                            p.averageRating.toStringAsFixed(1),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            if (p.storeName.isNotEmpty)
+            if (hasStore)
               Text(
-                p.storeName.toUpperCase(),
+                p.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.4,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black54,
                 ),
               ),
             Text(
-              p.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 13, color: Colors.black87),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Text(
-                  "$symbol${_formatPrice(p.price)}",
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (discount != null) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    "$symbol${_formatPrice(p.compareAtPrice)}",
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black45,
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                ],
-              ],
+              "$symbol${_formatPrice(p.price)}",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
             ),
           ],
         ),

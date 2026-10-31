@@ -41,6 +41,17 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     super.dispose();
   }
 
+  String _formatStatus(String status) {
+    final words = status
+        .replaceAll('_', ' ')
+        .toLowerCase()
+        .split(' ')
+        .where((word) => word.isNotEmpty);
+    return words
+        .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
+  }
+
   Future<void> _fetchOrders() async {
     _cancelToken?.cancel();
     _cancelToken = CancelToken();
@@ -117,7 +128,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
       ),
       body: Column(
         children: [
-          // Filter Chips Carousel
           SizedBox(
             height: 48,
             child: ListView.builder(
@@ -238,10 +248,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Order Number & Status Badge
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       "Order: ${order.orderNumber}",
@@ -250,26 +258,33 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: statusColor.withOpacity(0.12),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Text(
-                                        order.status,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: statusColor,
+                                    const SizedBox(height: 8),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withOpacity(0.12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          _formatStatus(order.status),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: statusColor,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
+
                                 const SizedBox(height: 12),
 
                                 // Item Count & Date

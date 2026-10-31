@@ -43,7 +43,6 @@ class _SellerGateScreenState extends State<SellerGateScreen> {
     try {
       final response = await _storeOperations.getStores(pageSize: 50);
       if (!mounted) return;
-
       final storage = TokenStorage();
       await storage.saveIsSeller(true);
       await storage.saveMode('seller');

@@ -337,9 +337,8 @@ class _CartScreenState extends State<CartScreen> {
                         child: Column(
                           children: [
                             priceRow("MRP", _mrpTotal.toInt()),
-                            priceRow("Platform fee", 20),
                             priceRow("Discounts", _discountTotal.toInt()),
-                            priceRow("Total amount", (_subtotal + 20).toInt()),
+                            priceRow("Total amount", _subtotal.toInt()),
                           ],
                         ),
                       ),

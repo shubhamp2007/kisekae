@@ -293,12 +293,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               _settingTile(
                 cs,
-                icon: Icons.description,
-                label: 'Terms & conditions',
-                onTap: _openTerms,
-              ),
-              _settingTile(
-                cs,
                 icon: Icons.logout,
                 label: 'Logout',
                 isLoading: _isLoggingOut,

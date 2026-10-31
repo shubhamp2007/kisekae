@@ -34,7 +34,6 @@ String formatDate(DateTime date) {
   return '${d.day} ${_short[d.month - 1]} ${d.year}';
 }
 
-/// Indian digit grouping: ₹1,23,456 (drops ".00").
 String inr(double value) {
   final parts = value.abs().toStringAsFixed(2).split('.');
   var whole = parts[0];

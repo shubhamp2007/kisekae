@@ -33,6 +33,17 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     super.dispose();
   }
 
+  String _formatStatus(String status) {
+    final words = status
+        .replaceAll('_', ' ')
+        .toLowerCase()
+        .split(' ')
+        .where((word) => word.isNotEmpty);
+    return words
+        .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
+  }
+
   Future<void> _fetchOrderDetail() async {
     _cancelToken = CancelToken();
     setState(() => _isLoading = true);
@@ -263,8 +274,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     },
                   ),
                   const Divider(height: 24, color: Color(0xFFE5DDD2)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "Order Number : ${order.orderNumber}",
@@ -274,14 +285,18 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                           color: Colors.black,
                         ),
                       ),
-                      Text(
-                        order.status,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: order.status.toUpperCase() == 'CANCELLED'
-                              ? Colors.red.shade700
-                              : primaryColor,
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          order.status,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: order.status.toUpperCase() == 'CANCELLED'
+                                ? Colors.red.shade700
+                                : primaryColor,
+                          ),
                         ),
                       ),
                     ],

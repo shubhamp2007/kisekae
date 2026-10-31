@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kisekae/models/auth_response.dart';
 import 'package:kisekae/screens/seller_gate_screen.dart';
 import 'package:kisekae/services/account_service.dart';
+import 'package:kisekae/services/profile_details.dart';
 import 'package:kisekae/services/storage.dart';
 
 class PostAuth {
@@ -23,6 +24,7 @@ class PostAuth {
     }
 
     await TokenStorage().saveIsSeller(isSeller);
+    await ProfileDetails().registerCurrentFCMToken();
     if (!context.mounted) return;
 
     if (picked && !isSeller) {
