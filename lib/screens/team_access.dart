@@ -460,6 +460,28 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
           'Team Access',
           style: TextStyle(fontWeight: FontWeight.w700, color: cs.onSurface),
         ),
+        actions: [
+          if ((_isOwner || _isManager) && !_loading)
+            _leaving
+                ? Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: cs.error,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    ),
+                  )
+                : IconButton(
+                    tooltip: 'Leave store',
+                    onPressed: _busyId != null ? null : _leaveStore,
+                    icon: Icon(Icons.logout, color: cs.error),
+                  ),
+        ],
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -529,46 +551,6 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
               ),
               const SizedBox(height: 10),
               _membersSection(cs),
-              if ((_isOwner || _isManager) && !_loading) ...[
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: OutlinedButton.icon(
-                    onPressed: _leaving ? null : _leaveStore,
-                    icon: _leaving
-                        ? SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              color: cs.error,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(Icons.logout, size: 20),
-                    label: const Text('Leave store'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: cs.error,
-                      side: BorderSide(color: cs.error),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-                if (_isOwner)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      'As the owner, you will choose a new owner before leaving.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: cs.onSurface.withOpacity(0.65),
-                      ),
-                    ),
-                  ),
-              ],
             ],
           ),
         ),
