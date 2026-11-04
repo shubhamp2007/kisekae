@@ -104,7 +104,11 @@ class MoveToCartResult {
   });
 
   factory MoveToCartResult.fromJson(Map<String, dynamic> body) {
-    final data = Map<String, dynamic>.from(body['data'] as Map);
+    final rawData = body['data'];
+    final data = rawData is Map
+        ? Map<String, dynamic>.from(rawData)
+        : <String, dynamic>{};
+
     return MoveToCartResult(
       message: body['message']?.toString() ?? 'Moved to cart',
       productId: data['product_id'] as int? ?? 0,
@@ -134,7 +138,10 @@ class BulkMoveToCartResult {
   });
 
   factory BulkMoveToCartResult.fromJson(Map<String, dynamic> body) {
-    final data = Map<String, dynamic>.from(body['data'] as Map? ?? {});
+    final rawData = body['data'];
+    final data = rawData is Map
+        ? Map<String, dynamic>.from(rawData)
+        : <String, dynamic>{};
 
     return BulkMoveToCartResult(
       message:
