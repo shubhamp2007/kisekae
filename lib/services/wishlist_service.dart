@@ -17,6 +17,11 @@ class WishlistService extends BaseRepository {
     return null;
   }
 
+  Map<String, dynamic> _bodyMap(dynamic body) {
+    if (body is Map) return Map<String, dynamic>.from(body);
+    return <String, dynamic>{};
+  }
+
   List<dynamic> _dataList(dynamic body) {
     if (body is Map) {
       final inner = body['data'];
@@ -86,7 +91,7 @@ class WishlistService extends BaseRepository {
         '/profile/wishlist/$productId/move-to-cart/',
       );
 
-      return MoveToCartResult.fromJson(_dataMap(response.data)!);
+      return MoveToCartResult.fromJson(_bodyMap(response.data));
     });
   }
 
@@ -99,7 +104,7 @@ class WishlistService extends BaseRepository {
         data: payload,
       );
 
-      return BulkMoveToCartResult.fromJson(_dataMap(response.data)!);
+      return BulkMoveToCartResult.fromJson(_bodyMap(response.data));
     });
   }
 }

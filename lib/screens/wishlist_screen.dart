@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/wishlist.dart';
+import 'package:kisekae/screens/product_screen.dart';
 import 'package:kisekae/services/wishlist_service.dart';
 
 class WishlistScreen extends StatefulWidget {
@@ -22,11 +24,31 @@ class _WishlistScreenState extends State<WishlistScreen> {
     _fetchWishlist();
   }
 
-  Future<void> _fetchWishlist() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  String _errorText(Object e) {
+    if (e is ApiException) return e.message;
+    return 'Something went wrong. Please try again.';
+  }
+
+  void _showSnack(String message, {Color? color}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+  }
+
+  Future<void> _fetchWishlist({bool showSpinner = true}) async {
+    if (showSpinner) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final items = await _wishlistService.getWishlistItems();
@@ -35,15 +57,27 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
       setState(() {
         _wishlistItems = items;
+        _errorMessage = null;
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString();
+        if (showSpinner || _wishlistItems.isEmpty) {
+          _errorMessage = _errorText(e);
+        }
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _openProduct(WishlistItem item) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProductDetailsScreen(productId: item.product.id),
+      ),
+    );
+    if (mounted) _fetchWishlist(showSpinner: false);
   }
 
   Future<void> _moveAllToCart() async {
@@ -52,11 +86,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
         .toList();
 
     if (inStockItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("No in-stock items available to move to cart."),
-        ),
-      );
+      _showSnack('No in-stock items available to move to cart.');
       return;
     }
 
@@ -73,20 +103,18 @@ class _WishlistScreenState extends State<WishlistScreen> {
         );
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "${result.movedCount} item(s) moved to cart.${result.skippedCount > 0 ? ' ${result.skippedCount} skipped.' : ''}",
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
+      final moved = result.movedCount > 0
+          ? result.movedCount
+          : productIds.length - result.skippedCount;
+
+      _showSnack(
+        '$moved item(s) moved to cart.${result.skippedCount > 0 ? ' ${result.skippedCount} skipped.' : ''}',
+        color: Colors.green,
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      _showSnack(_errorText(e), color: Colors.red);
+      _fetchWishlist(showSpinner: false);
     }
   }
 
@@ -103,23 +131,18 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      _showSnack(result.message, color: Colors.green);
     } catch (e) {
       if (!mounted) return;
 
-      setState(() {
-        _wishlistItems.insert(index, item);
-      });
+      final notFound = e is ApiException && e.code == 'WISHLIST_ITEM_NOT_FOUND';
+      if (e is ApiException && !notFound) {
+        setState(() => _wishlistItems.insert(index, item));
+      } else {
+        _fetchWishlist(showSpinner: false);
+      }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      _showSnack(_errorText(e), color: Colors.red);
     }
   }
 
@@ -138,19 +161,18 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
-      );
+      _showSnack(message);
     } catch (e) {
       if (!mounted) return;
 
-      setState(() {
-        _wishlistItems.insert(index, item);
-      });
+      final notFound = e is ApiException && e.code == 'WISHLIST_ITEM_NOT_FOUND';
+      if (e is ApiException && !notFound) {
+        setState(() => _wishlistItems.insert(index, item));
+      } else {
+        _fetchWishlist(showSpinner: false);
+      }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      _showSnack(_errorText(e), color: Colors.red);
     }
   }
 
@@ -208,20 +230,10 @@ class _WishlistScreenState extends State<WishlistScreen> {
                               _wishlistItems.clear();
                             });
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(message),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
+                            _showSnack(message, color: Colors.green);
                           } catch (e) {
                             setDialogState(() => isClearing = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(e.toString()),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
+                            _showSnack(_errorText(e), color: Colors.red);
                           }
                         },
                   style: ElevatedButton.styleFrom(
@@ -420,7 +432,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
     if (_wishlistItems.isEmpty) {
       return RefreshIndicator(
         color: const Color(0xFF8B2E3E),
-        onRefresh: _fetchWishlist,
+        onRefresh: () => _fetchWishlist(showSpinner: false),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
@@ -458,7 +470,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
     return RefreshIndicator(
       color: const Color(0xFF8B2E3E),
-      onRefresh: _fetchWishlist,
+      onRefresh: () => _fetchWishlist(showSpinner: false),
       child: GridView.builder(
         padding: const EdgeInsets.all(16),
         physics: const AlwaysScrollableScrollPhysics(),
@@ -482,175 +494,178 @@ class _WishlistScreenState extends State<WishlistScreen> {
     const cardBgColor = Color(0xFFFFF9F2);
     final product = item.product;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5DDD3), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child:
-                      product.imageUrl != null && product.imageUrl!.isNotEmpty
-                      ? Image.network(
-                          product.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                        )
-                      : _buildPlaceholder(),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: GestureDetector(
-                  onTap: () => _removeWishlistItem(item),
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.close,
-                      size: 16,
-                      color: Colors.white,
-                    ),
+    return GestureDetector(
+      onTap: () => _openProduct(item),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBgColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE5DDD3), width: 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child:
+                        product.imageUrl != null && product.imageUrl!.isNotEmpty
+                        ? Image.network(
+                            product.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                          )
+                        : _buildPlaceholder(),
                   ),
                 ),
-              ),
-              if (!product.isInStock)
                 Positioned(
-                  bottom: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      "OUT OF STOCK",
-                      style: TextStyle(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () => _removeWishlistItem(item),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 16,
                         color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-            ],
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (product.store != null)
-                        Text(
-                          product.store!.name.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black54,
-                            letterSpacing: 0.5,
+                if (!product.isInStock)
+                  Positioned(
+                    bottom: 8,
+                    left: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black87,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        "OUT OF STOCK",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (product.store != null)
+                          Text(
+                            product.store!.name.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black54,
+                              letterSpacing: 0.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
+                        const SizedBox(height: 2),
+                        Text(
+                          product.name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            height: 1.2,
+                          ),
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      const SizedBox(height: 2),
-                      Text(
-                        product.name,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                          height: 1.2,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Text(
-                            "₹${product.price}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: primaryBurgundy,
-                            ),
-                          ),
-                          if (product.compareAtPrice != null &&
-                              product.compareAtPrice!.isNotEmpty) ...[
-                            const SizedBox(width: 6),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
                             Text(
-                              "₹${product.compareAtPrice}",
+                              "₹${product.price}",
                               style: const TextStyle(
-                                fontSize: 11,
-                                color: Colors.black38,
-                                decoration: TextDecoration.lineThrough,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: primaryBurgundy,
                               ),
                             ),
+                            if (product.compareAtPrice != null &&
+                                product.compareAtPrice!.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Text(
+                                "₹${product.compareAtPrice}",
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.black38,
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 36,
-                    child: OutlinedButton(
-                      onPressed: product.isInStock
-                          ? () => _moveToCart(item)
-                          : null,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: primaryBurgundy,
-                        side: BorderSide(
-                          color: product.isInStock
-                              ? primaryBurgundy
-                              : Colors.grey.shade400,
-                          width: 1.5,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                      ],
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 36,
+                      child: OutlinedButton(
+                        onPressed: product.isInStock
+                            ? () => _moveToCart(item)
+                            : null,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: primaryBurgundy,
+                          side: BorderSide(
+                            color: product.isInStock
+                                ? primaryBurgundy
+                                : Colors.grey.shade400,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          padding: EdgeInsets.zero,
                         ),
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: Text(
-                        product.isInStock ? "MOVE TO CART" : "OUT OF STOCK",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: product.isInStock
-                              ? primaryBurgundy
-                              : Colors.grey,
+                        child: Text(
+                          product.isInStock ? "MOVE TO CART" : "OUT OF STOCK",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: product.isInStock
+                                ? primaryBurgundy
+                                : Colors.grey,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
