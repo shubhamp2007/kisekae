@@ -15,6 +15,7 @@ class CheckoutService extends BaseRepository {
     String? customerPhone,
     String? shippingAddress,
     String? notes,
+    bool useWallet = false,
     CancelToken? cancelToken,
   }) async {
     return execute(() async {
@@ -29,6 +30,7 @@ class CheckoutService extends BaseRepository {
         if (shippingAddress != null && shippingAddress.isNotEmpty)
           'shipping_address': shippingAddress,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (useWallet) 'use_wallet': true,
       };
 
       final response = await _dio.post(

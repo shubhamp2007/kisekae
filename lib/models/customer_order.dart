@@ -133,6 +133,11 @@ class OrderDetail {
   final String? trackingUrl;
   final String? notes;
   final String? deliveredAt;
+  final String? refundId;
+  final String? refundAmount;
+  final String? refundReason;
+  final String? cancelledAt;
+  final String? refundedAt;
   final List<OrderItem> items;
   final List<OrderStatusHistory> statusHistory;
   final String createdAt;
@@ -153,6 +158,11 @@ class OrderDetail {
     this.trackingUrl,
     this.notes,
     this.deliveredAt,
+    this.refundId,
+    this.refundAmount,
+    this.refundReason,
+    this.cancelledAt,
+    this.refundedAt,
     required this.items,
     required this.statusHistory,
     required this.createdAt,
@@ -178,6 +188,11 @@ class OrderDetail {
       trackingUrl: json['tracking_url'] as String?,
       notes: json['notes'] as String?,
       deliveredAt: json['delivered_at'] as String?,
+      refundId: json['refund_id']?.toString(),
+      refundAmount: json['refund_amount']?.toString(),
+      refundReason: json['refund_reason'] as String?,
+      cancelledAt: json['cancelled_at'] as String?,
+      refundedAt: json['refunded_at'] as String?,
       items: rawItems
           .map((e) => OrderItem.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),

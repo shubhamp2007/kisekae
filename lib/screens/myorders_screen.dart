@@ -27,6 +27,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     'SHIPPED',
     'DELIVERED',
     'CANCELLED',
+    'REFUND_REQUESTED',
+    'REFUNDED',
   ];
 
   @override
@@ -84,12 +86,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'DELIVERED':
+      case 'REFUNDED':
         return Colors.green.shade700;
       case 'SHIPPED':
       case 'PROCESSING':
         return Colors.blue.shade700;
       case 'CONFIRMED':
       case 'PENDING':
+      case 'REFUND_REQUESTED':
         return Colors.amber.shade800;
       case 'CANCELLED':
         return Colors.red.shade700;
@@ -180,7 +184,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
           const SizedBox(height: 8),
 
-          // Orders List
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -220,14 +223,17 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         final statusColor = _getStatusColor(order.status);
 
                         return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
                                     OrderDetailsScreen(orderId: order.id),
                               ),
                             );
+                            if (mounted) {
+                              _fetchOrders();
+                            }
                           },
                           child: Container(
                             padding: const EdgeInsets.all(16),
@@ -287,7 +293,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
                                 const SizedBox(height: 12),
 
-                                // Item Count & Date
                                 Row(
                                   children: [
                                     const Icon(
@@ -320,7 +325,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                   color: Color(0xFFE5DDD2),
                                 ),
 
-                                // Total Price & Navigation Arrow
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,

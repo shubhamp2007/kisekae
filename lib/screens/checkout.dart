@@ -1,14 +1,18 @@
+import 'dart:math' as math;
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/cart.dart';
 import 'package:kisekae/models/checkout.dart';
+import 'package:kisekae/models/model.dart';
 import 'package:kisekae/models/user_address.dart';
 import 'package:kisekae/screens/home_screen.dart';
 import 'package:kisekae/screens/trackorderscreen.dart';
 import 'package:kisekae/services/buyer_address.dart';
 import 'package:kisekae/services/checkout_service.dart';
+import 'package:kisekae/services/wallet_service.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class _PaymentMethod {
@@ -41,16 +45,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final PageController _controller = PageController();
   final AddressService _addressService = AddressService();
   final CheckoutService _checkoutService = CheckoutService();
+  final WalletOperations _walletOperations = WalletOperations();
   late final Razorpay _razorpay;
 
   CancelToken? _cancelToken;
   CustomerAddress? _selectedAddress;
   CheckoutResponse? _result;
+  Wallet? _wallet;
 
   int _currentPage = 0;
   int _selectedMethod = 2;
   bool _isLoadingAddress = true;
   bool _isPlacingOrder = false;
+  bool _useWallet = false;
 
   String get _razorpayKey => dotenv.env['RAZORPAY_KEY_ID'] ?? '';
 
@@ -59,6 +66,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     _cancelToken = CancelToken();
     _loadAddress();
+    _loadWallet();
     _razorpay = Razorpay();
     _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
     _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
@@ -96,6 +104,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  Future<void> _loadWallet() async {
+    try {
+      final wallet = await _walletOperations.getWallet();
+      if (!mounted) return;
+      setState(() {
+        _wallet = wallet;
+      });
+    } catch (_) {}
+  }
+
   double get _mrpTotal {
     double total = 0;
     for (final item in widget.cart.items) {
@@ -116,6 +134,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   double get _totalAmount => _subtotal;
+
+  double get _walletDeduction {
+    if (!_useWallet || _wallet == null || _wallet!.balance <= 0) return 0;
+    return math.min(_wallet!.balance, _totalAmount);
+  }
+
+  double get _payableAmount => math.max(0, _totalAmount - _walletDeduction);
+
+  bool get _isFullyCoveredByWallet =>
+      _useWallet &&
+      _wallet != null &&
+      _wallet!.balance > 0 &&
+      _walletDeduction >= _totalAmount;
 
   String get _deliveryText {
     final date = DateTime.now().add(
@@ -191,6 +222,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     try {
       final result = await _checkoutService.checkoutCart(
         addressId: address.id,
+        useWallet: _useWallet,
         cancelToken: _cancelToken,
       );
       if (!mounted) return;
@@ -407,7 +439,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                           )
                         : Text(
-                            _currentPage < 2 ? 'CONTINUE' : 'CONTINUE SHOPPING',
+                            _currentPage == 0
+                                ? 'CONTINUE'
+                                : _currentPage == 1
+                                ? (_isFullyCoveredByWallet
+                                      ? 'PAY WITH WALLET'
+                                      : 'CONTINUE')
+                                : 'CONTINUE SHOPPING',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -529,61 +567,210 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildPaymentPage() {
+    final hasWalletBalance = _wallet != null && _wallet!.balance > 0;
+
     return SingleChildScrollView(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (var i = 0; i < _paymentMethods.length; i++)
-            GestureDetector(
-              onTap: () => setState(() => _selectedMethod = i),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF9F2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: _paymentMethods[i].iconAsset != null
-                          ? Image.asset(_paymentMethods[i].iconAsset!)
-                          : null,
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Text(
-                        _paymentMethods[i].label,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    Icon(
-                      _selectedMethod == i
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                    ),
-                  ],
+          if (hasWalletBalance) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF9F2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _useWallet ? _primaryColor : const Color(0xFFD3C7B8),
+                  width: _useWallet ? 1.5 : 1,
                 ),
               ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: _primaryColor.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: _primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Use Wallet Balance',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Available: ₹${_wallet!.balance.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.black.withOpacity(0.65),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: _useWallet,
+                        activeColor: _primaryColor,
+                        onChanged: (val) {
+                          setState(() => _useWallet = val);
+                        },
+                      ),
+                    ],
+                  ),
+                  if (_useWallet) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFE8DF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _isFullyCoveredByWallet
+                                ? 'Fully covers order amount'
+                                : 'Wallet deduction applied',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '-₹${_walletDeduction.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
+          ],
+
+          if (_isFullyCoveredByWallet) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.green.shade400),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    color: Colors.green,
+                    size: 22,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Full payment covered by your wallet balance. No extra payment method required.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            if (hasWalletBalance && _useWallet)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(
+                  'Select payment method for remaining ₹${_payableAmount.toStringAsFixed(0)}:',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            for (var i = 0; i < _paymentMethods.length; i++)
+              GestureDetector(
+                onTap: () => setState(() => _selectedMethod = i),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF9F2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: _paymentMethods[i].iconAsset != null
+                            ? Image.asset(_paymentMethods[i].iconAsset!)
+                            : null,
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Text(
+                          _paymentMethods[i].label,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Icon(
+                        _selectedMethod == i
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
           const SizedBox(height: 4),
           _priceSummary(),
           const SizedBox(height: 8),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 14, color: Colors.grey),
-              SizedBox(width: 4),
-              Text(
-                'Secured by Razorpay',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
+          if (!_isFullyCoveredByWallet)
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock_outline, size: 14, color: Colors.grey),
+                SizedBox(width: 4),
+                Text(
+                  'Secured by Razorpay',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -630,10 +817,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _priceSummary() {
+    final effectiveTotal = _useWallet ? _payableAmount : _totalAmount;
     final rows = [
       ['MRP', '₹${_mrpTotal.toInt()}'],
       ['Discounts', '-₹${_discountTotal.toInt()}'],
-      ['Total amount', '₹${_totalAmount.toInt()}'],
+      if (_useWallet && _walletDeduction > 0)
+        ['Wallet balance applied', '-₹${_walletDeduction.toInt()}'],
+      ['Total amount', '₹${effectiveTotal.toInt()}'],
     ];
 
     return Container(
@@ -662,7 +852,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Text(
                     row[1],
                     style: TextStyle(
-                      color: row[0] == 'Discounts' ? Colors.green : null,
+                      color:
+                          (row[0] == 'Discounts' ||
+                              row[0] == 'Wallet balance applied')
+                          ? Colors.green
+                          : null,
                       fontWeight: row[0] == 'Total amount'
                           ? FontWeight.w700
                           : FontWeight.w400,
