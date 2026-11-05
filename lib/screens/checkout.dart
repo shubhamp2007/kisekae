@@ -30,7 +30,6 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   static const Color _primaryColor = Color(0xFF8B2E3E);
-  static const double _platformFee = 20;
   static const int _estimatedDeliveryDays = 5;
 
   static const List<_PaymentMethod> _paymentMethods = [

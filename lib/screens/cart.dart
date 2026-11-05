@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kisekae/models/cart.dart';
 import 'package:kisekae/screens/checkout.dart';
+import 'package:kisekae/screens/product_screen.dart';
 import 'package:kisekae/services/cart_service.dart';
 import 'package:kisekae/services/wishlist_service.dart';
 
@@ -222,6 +223,16 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  Future<void> _openProduct(CartItem item) async {
+    if (_isProcessingAction) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProductDetailsScreen(productId: item.product.id),
+      ),
+    );
+    if (mounted) _fetchCart();
+  }
+
   double get _mrpTotal {
     if (_cartModel == null) return 0;
     double total = 0;
@@ -311,7 +322,11 @@ class _CartScreenState extends State<CartScreen> {
                                   const SizedBox(height: 16),
                               itemBuilder: (context, index) {
                                 final item = _cartModel!.items[index];
-                                return productCard(item);
+                                return GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _openProduct(item),
+                                  child: productCard(item),
+                                );
                               },
                             ),
                     ),
