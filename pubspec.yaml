@@ -51,6 +51,9 @@ dependencies:
   firebase_messaging: ^15.0.0
   flutter_local_notifications: ^17.0.0
   razorpay_flutter: ^1.4.7
+  camera: ^0.11.1
+  google_mlkit_pose_detection: ^0.12.0
+  permission_handler: ^11.4.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
