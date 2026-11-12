@@ -20,6 +20,7 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final hasStore = storeName.trim().isNotEmpty;
 
     return Column(
@@ -31,7 +32,7 @@ class ProductCard extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFF8B2E3E)),
+            border: Border.all(color: colors.primary),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16.5),
@@ -42,22 +43,22 @@ class ProductCard extends StatelessWidget {
               loadingBuilder: (context, child, progress) {
                 if (progress == null) return child;
                 return Container(
-                  color: const Color(0xFFE0D8CD),
-                  child: const Center(
+                  color: colors.outlineVariant,
+                  child: Center(
                     child: SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Color(0xFF8B2E3E),
+                        color: colors.primary,
                       ),
                     ),
                   ),
                 );
               },
               errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFFD3C7B8),
-                child: const Icon(Icons.image, size: 40, color: Colors.black38),
+                color: colors.surfaceContainerHighest,
+                child: Icon(Icons.image, size: 40, color: colors.outline),
               ),
             ),
           ),
@@ -74,7 +75,7 @@ class ProductCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: hasStore ? FontWeight.w500 : FontWeight.w400,
-                  color: hasStore ? Colors.black : Colors.black54,
+                  color: hasStore ? colors.onSurface : colors.onSurfaceVariant,
                 ),
               ),
             ),
@@ -83,10 +84,10 @@ class ProductCard extends StatelessWidget {
             const SizedBox(width: 2),
             Text(
               rating.toStringAsFixed(1),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: colors.onSurface,
               ),
             ),
           ],
@@ -96,10 +97,10 @@ class ProductCard extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: Colors.black54,
+              color: colors.onSurfaceVariant,
             ),
           ),
         Text(

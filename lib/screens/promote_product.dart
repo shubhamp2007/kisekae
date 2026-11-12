@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/advertising.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/services/advertising.dart';
@@ -77,10 +78,14 @@ class _PromoteProductsScreenState extends State<PromoteProductsScreen> {
 
   void _snack(String text) {
     if (!mounted) return;
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(content: Text(text), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(text, style: TextStyle(color: scheme.onError)),
+          backgroundColor: scheme.error,
+        ),
       );
   }
 
@@ -203,11 +208,11 @@ class _PromoteProductsScreenState extends State<PromoteProductsScreen> {
         final selected = _selected.contains(p.id);
 
         return Material(
-          color: const Color(0xFFFFF9F2),
+          color: context.appColors.card,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: selected ? cs.primary : const Color(0xFFB78876),
+              color: selected ? cs.primary : context.appColors.border,
               width: selected ? 2 : 1,
             ),
           ),
@@ -227,7 +232,7 @@ class _PromoteProductsScreenState extends State<PromoteProductsScreen> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0C3C7),
+                      color: cs.primary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(Icons.checkroom, color: cs.primary),
@@ -266,6 +271,7 @@ class _PromoteProductsScreenState extends State<PromoteProductsScreen> {
                     Checkbox(
                       value: selected,
                       activeColor: cs.primary,
+                      checkColor: cs.onPrimary,
                       onChanged: (_) => setState(
                         () => selected
                             ? _selected.remove(p.id)

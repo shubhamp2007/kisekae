@@ -8,23 +8,22 @@ class BottomBar extends StatelessWidget {
 
   const BottomBar({super.key, this.selectedIndex = 0});
 
-  static const Color _barColor = Color(0xFF8B2E3E);
-  static const Color _circleColor = Color(0xFFD9D9D9);
-
-  Widget _selected(IconData icon) {
+  Widget _selected(BuildContext context, IconData icon) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: 44,
       height: 44,
-      decoration: const BoxDecoration(
-        color: _circleColor,
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest,
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: _barColor, size: 26),
+      child: Icon(icon, color: colors.primary, size: 26),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return NavigationBar(
       selectedIndex: selectedIndex,
       onDestinationSelected: (i) {
@@ -32,8 +31,7 @@ class BottomBar extends StatelessWidget {
           if (i == 1) {
             Navigator.popUntil(
               context,
-              (route) =>
-                  route.settings.name == '/categories' || route.isFirst,
+              (route) => route.settings.name == '/categories' || route.isFirst,
             );
           }
           return;
@@ -73,7 +71,7 @@ class BottomBar extends StatelessWidget {
         }
       },
       elevation: 0,
-      backgroundColor: _barColor,
+      backgroundColor: colors.primary,
       surfaceTintColor: Colors.transparent,
       shadowColor: Colors.transparent,
       indicatorColor: Colors.transparent,
@@ -82,27 +80,27 @@ class BottomBar extends StatelessWidget {
       ), // no focus/press circle
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       labelTextStyle: WidgetStateProperty.all(
-        const TextStyle(color: Colors.white, fontSize: 12, letterSpacing: 0.3),
+        TextStyle(color: colors.onPrimary, fontSize: 12, letterSpacing: 0.3),
       ),
       destinations: [
         NavigationDestination(
-          icon: const Icon(Icons.home_filled, color: Colors.white),
-          selectedIcon: _selected(Icons.home_filled),
+          icon: Icon(Icons.home_filled, color: colors.onPrimary),
+          selectedIcon: _selected(context, Icons.home_filled),
           label: 'HOME',
         ),
         NavigationDestination(
-          icon: const Icon(Icons.apps_rounded, color: Colors.white),
-          selectedIcon: _selected(Icons.apps_rounded),
+          icon: Icon(Icons.apps_rounded, color: colors.onPrimary),
+          selectedIcon: _selected(context, Icons.apps_rounded),
           label: 'CATEGORIES',
         ),
         NavigationDestination(
-          icon: const Icon(Icons.shopping_cart, color: Colors.white),
-          selectedIcon: _selected(Icons.shopping_cart),
+          icon: Icon(Icons.shopping_cart, color: colors.onPrimary),
+          selectedIcon: _selected(context, Icons.shopping_cart),
           label: 'CART',
         ),
         NavigationDestination(
-          icon: const Icon(Icons.person_rounded, color: Colors.white),
-          selectedIcon: _selected(Icons.person_rounded),
+          icon: Icon(Icons.person_rounded, color: colors.onPrimary),
+          selectedIcon: _selected(context, Icons.person_rounded),
           label: 'PROFILE',
         ),
       ],

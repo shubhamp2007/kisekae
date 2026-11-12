@@ -11,7 +11,6 @@ import 'package:kisekae/screens/subcategories/mens.dart';
 import 'package:kisekae/screens/subcategories/womens.dart';
 import 'package:kisekae/screens/wishlist_screen.dart';
 import 'package:kisekae/services/dio.dart';
-import 'package:kisekae/services/profile_details.dart';
 import 'package:kisekae/widgets/best_deals.dart';
 import 'package:kisekae/widgets/bottom_bar.dart';
 import 'package:kisekae/widgets/searchbar.dart';
@@ -70,8 +69,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _wishlistButton() {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: const Color(0xFF8B2E3E),
+      color: colors.primary,
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -79,10 +79,14 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const WishlistScreen()));
         },
-        child: const SizedBox(
+        child: SizedBox(
           height: 37,
           width: 37,
-          child: Icon(Icons.favorite, color: Color(0xFFDBBEC3), size: 22),
+          child: Icon(
+            Icons.favorite,
+            color: colors.onPrimary.withValues(alpha: 0.8),
+            size: 22,
+          ),
         ),
       ),
     );
@@ -95,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 118,
@@ -109,12 +114,12 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Row(
                 children: [
-                  const Text(
+                  Text(
                     "KISEKAE",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF7D2938),
+                      color: colors.primary,
                       fontFamily: 'serif',
                     ),
                   ),
@@ -174,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(15),
                         border: Border.all(
-                          color: const Color(0xFFE5DDD3),
+                          color: colors.outlineVariant,
                           width: 1,
                         ),
                       ),
@@ -307,14 +312,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 6),
             Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     "Brands To Explore",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                   ),
                 ),
@@ -415,6 +420,7 @@ class _CategoryImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -424,7 +430,7 @@ class _CategoryImage extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 27,
-              backgroundColor: const Color(0xFFDBBEC3),
+              backgroundColor: colors.primary.withValues(alpha: 0.3),
               child: ClipOval(
                 child: Image.asset(
                   imageUrl,

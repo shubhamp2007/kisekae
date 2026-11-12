@@ -96,12 +96,13 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
-    const cardBackgroundColor = Color(0xFFFFF8F0);
+    final colors = Theme.of(context).colorScheme;
+    final backgroundColor = colors.surface;
+    final primaryColor = colors.primary;
+    final cardBackgroundColor = colors.surfaceContainerLow;
 
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(child: CircularProgressIndicator(color: primaryColor)),
       );
@@ -114,9 +115,9 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
           backgroundColor: backgroundColor,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new,
-              color: Colors.black,
+              color: colors.onSurface,
               size: 20,
             ),
             onPressed: () => Navigator.pop(context),
@@ -129,7 +130,10 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
               const Text("Tracking information unavailable"),
               const SizedBox(height: 12),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: primaryColor),
+                style: FilledButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: colors.onPrimary,
+                ),
                 onPressed: _fetchTrackingData,
                 child: const Text("Retry"),
               ),
@@ -149,17 +153,17 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.black,
+            color: colors.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Track Order",
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -186,7 +190,7 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black.withOpacity(0.6),
+                      color: colors.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 if (detail.trackingNumber != null &&
@@ -195,23 +199,23 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                     padding: const EdgeInsets.only(top: 2.0),
                     child: Text(
                       "Tracking ID: ${detail.trackingNumber}",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
                   ),
-                const Divider(height: 24, color: Color(0xFFE5DDD2)),
+                Divider(height: 24, color: colors.outlineVariant),
               ],
 
               // Dynamic Status Timeline
               if (history.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20.0),
                   child: Text(
                     "No tracking status updates available yet.",
-                    style: TextStyle(color: Colors.black54),
+                    style: TextStyle(color: colors.onSurfaceVariant),
                   ),
                 )
               else
@@ -234,7 +238,7 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                                 margin: const EdgeInsets.only(top: 4),
                                 width: 14,
                                 height: 14,
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   color: primaryColor,
                                   shape: BoxShape.circle,
                                 ),
@@ -243,7 +247,7 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                                 Expanded(
                                   child: Container(
                                     width: 2,
-                                    color: primaryColor.withOpacity(0.3),
+                                    color: primaryColor.withValues(alpha: 0.3),
                                   ),
                                 ),
                             ],
@@ -260,10 +264,10 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                                   // Status Heading
                                   Text(
                                     item.toStatus,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      color: colors.onSurface,
                                     ),
                                   ),
 
@@ -274,7 +278,9 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                                       item.notes!,
                                       style: TextStyle(
                                         fontSize: 13,
-                                        color: Colors.black.withOpacity(0.7),
+                                        color: colors.onSurface.withValues(
+                                          alpha: 0.7,
+                                        ),
                                         height: 1.3,
                                       ),
                                     ),
@@ -287,7 +293,9 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                                       "Updated by: ${item.changedByName}",
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.black.withOpacity(0.5),
+                                        color: colors.onSurface.withValues(
+                                          alpha: 0.5,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -298,7 +306,9 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
                                     _formatDate(item.createdAt),
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Colors.black.withOpacity(0.5),
+                                      color: colors.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
                                     ),
                                   ),
                                 ],

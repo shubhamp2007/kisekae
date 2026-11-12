@@ -107,6 +107,7 @@ class _FeaturedProductsRowState extends State<FeaturedProductsRow> {
   }
 
   Widget _buildSkeleton() {
+    final colors = Theme.of(context).colorScheme;
     return Row(
       children: [
         for (int i = 0; i < widget.count; i++) ...[
@@ -115,7 +116,7 @@ class _FeaturedProductsRowState extends State<FeaturedProductsRow> {
             child: Container(
               height: 215,
               decoration: BoxDecoration(
-                color: const Color(0xFFE0D8CD),
+                color: colors.outlineVariant,
                 borderRadius: BorderRadius.circular(18),
               ),
             ),

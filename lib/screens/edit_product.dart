@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/seller_product.dart';
 import 'package:kisekae/screens/productgallery.dart';
 import 'package:kisekae/services/seller_product.dart';
@@ -52,7 +53,9 @@ class _EditProductScreenState extends State<EditProductScreen> {
         ? p.status.toUpperCase()
         : 'ACTIVE';
 
-    _variantData = p.variants.map((v) => _EditVariantData.fromVariant(v)).toList();
+    _variantData = p.variants
+        .map((v) => _EditVariantData.fromVariant(v))
+        .toList();
     if (_variantData.isEmpty) {
       _variantData.add(_EditVariantData.empty());
     }
@@ -121,10 +124,14 @@ class _EditProductScreenState extends State<EditProductScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
+        final scheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update product: ${e.toString()}'),
-            backgroundColor: Colors.red.shade700,
+            content: Text(
+              'Failed to update product: ${e.toString()}',
+              style: TextStyle(color: scheme.onError),
+            ),
+            backgroundColor: scheme.error,
           ),
         );
       }
@@ -133,9 +140,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
-    const cardBackgroundColor = Color(0xFFFFF8F0);
+    final colors = Theme.of(context).colorScheme;
+    final backgroundColor = colors.surface;
+    final primaryColor = colors.primary;
+    final cardBackgroundColor = context.appColors.card;
+    final borderColor = colors.outlineVariant;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -144,17 +153,17 @@ class _EditProductScreenState extends State<EditProductScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.black,
+            color: colors.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Edit Product",
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -171,7 +180,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,24 +227,25 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 "Status",
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                                  color: colors.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 6),
                               DropdownButtonFormField<String>(
                                 initialValue: _selectedStatus,
+                                dropdownColor: cardBackgroundColor,
                                 decoration: InputDecoration(
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 12,
                                     vertical: 12,
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFE5DDD2),
+                                  fillColor: colors.surfaceContainerHighest,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: BorderSide.none,
@@ -277,7 +287,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,30 +295,31 @@ class _EditProductScreenState extends State<EditProductScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           "Variants",
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: colors.onSurface,
                           ),
                         ),
                         TextButton.icon(
-                          onPressed: () =>
-                              setState(() => _variantData.add(_EditVariantData.empty())),
-                          icon: const Icon(Icons.add, color: primaryColor, size: 18),
-                          label: const Text(
+                          onPressed: () => setState(
+                            () => _variantData.add(_EditVariantData.empty()),
+                          ),
+                          icon: Icon(Icons.add, color: primaryColor, size: 18),
+                          label: Text(
                             'Add',
                             style: TextStyle(color: primaryColor),
                           ),
                         ),
                       ],
                     ),
-                    const Divider(height: 12, color: Color(0xFFE5DDD2)),
+                    Divider(height: 12, color: borderColor),
                     for (var i = 0; i < _variantData.length; i++) ...[
                       _buildVariantCard(i, primaryColor),
                       if (i < _variantData.length - 1)
-                        const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                        Divider(height: 20, color: borderColor),
                     ],
                   ],
                 ),
@@ -320,18 +331,19 @@ class _EditProductScreenState extends State<EditProductScreen> {
                 child: FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: primaryColor,
+                    foregroundColor: colors.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                   onPressed: _isSaving ? null : _saveChanges,
                   child: _isSaving
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: colors.onPrimary,
                           ),
                         )
                       : const Text(
@@ -353,6 +365,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
   }
 
   Widget _buildVariantCard(int index, Color primaryColor) {
+    final colors = Theme.of(context).colorScheme;
     final v = _variantData[index];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -365,17 +378,19 @@ class _EditProductScreenState extends State<EditProductScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: _tryParseHex(v.colorHexCtrl.text) ?? Colors.grey,
-                border: Border.all(color: Colors.black26),
+                border: Border.all(
+                  color: colors.onSurface.withValues(alpha: 0.26),
+                ),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Variant ${index + 1}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
             ),
@@ -386,7 +401,11 @@ class _EditProductScreenState extends State<EditProductScreen> {
             ),
             if (_variantData.length > 1)
               IconButton(
-                icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
+                icon: Icon(
+                  Icons.remove_circle_outline,
+                  color: colors.error,
+                  size: 20,
+                ),
                 onPressed: () => setState(() {
                   _variantData[index].dispose();
                   _variantData.removeAt(index);
@@ -420,12 +439,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
         const SizedBox(height: 10),
         _buildTextField(controller: v.skuCtrl, label: "Variant SKU (optional)"),
         const SizedBox(height: 10),
-        const Text(
+        Text(
           "Stock per Size",
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: colors.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -460,7 +479,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                           vertical: 10,
                         ),
                         filled: true,
-                        fillColor: const Color(0xFFE5DDD2),
+                        fillColor: colors.surfaceContainerHighest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide.none,
@@ -490,28 +509,22 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   ),
                 );
               },
-              icon: const Icon(
+              icon: Icon(
                 Icons.photo_library_outlined,
                 size: 16,
-                color: Color(0xFF8B2E3E),
+                color: colors.primary,
               ),
               label: Text(
                 "Manage Photos"
                 "${v.imageCount > 0 ? ' (${v.imageCount})' : ''}",
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF8B2E3E),
-                ),
+                style: TextStyle(fontSize: 12, color: colors.primary),
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
                 ),
-                side: const BorderSide(
-                  color: Color(0xFF8B2E3E),
-                  width: 1,
-                ),
+                side: BorderSide(color: colors.primary, width: 1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -542,15 +555,16 @@ class _EditProductScreenState extends State<EditProductScreen> {
     List<TextInputFormatter>? inputFormatters,
     void Function(String)? onChanged,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: colors.onSurface,
           ),
         ),
         const SizedBox(height: 6),
@@ -568,7 +582,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
               vertical: 12,
             ),
             filled: true,
-            fillColor: const Color(0xFFE5DDD2),
+            fillColor: colors.surfaceContainerHighest,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/customer_order.dart';
 import 'package:kisekae/screens/trackorderscreen.dart';
 import 'package:kisekae/services/order_service.dart';
@@ -76,26 +77,31 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFFF8F0),
+        backgroundColor: ctx.appColors.card,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           "Cancel Order?",
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: ctx.cs.onSurface,
+          ),
         ),
         content: Text(
           "Are you sure you want to cancel Order #${_orderDetail!.orderNumber}?",
+          style: TextStyle(color: ctx.cs.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("NO", style: TextStyle(color: Colors.black54)),
+            child: Text("NO", style: TextStyle(color: ctx.appColors.mutedText)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               "YES, CANCEL",
               style: TextStyle(
-                color: Color(0xFF8B2E3E),
+                color: ctx.cs.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -123,7 +129,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Order has been cancelled successfully."),
-            backgroundColor: Colors.black87,
           ),
         );
       }
@@ -132,8 +137,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         setState(() => _isCancelling = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to cancel order: ${e.toString()}'),
-            backgroundColor: Colors.red.shade700,
+            content: Text(
+              'Failed to cancel order: ${e.toString()}',
+              style: TextStyle(color: context.cs.onError),
+            ),
+            backgroundColor: context.cs.error,
           ),
         );
       }
@@ -147,28 +155,24 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
+    final cs = context.cs;
+    final c = context.appColors;
 
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: backgroundColor,
-        body: Center(child: CircularProgressIndicator(color: primaryColor)),
+      return Scaffold(
+        backgroundColor: cs.surface,
+        body: Center(child: CircularProgressIndicator(color: cs.primary)),
       );
     }
 
     if (_orderDetail == null) {
       return Scaffold(
-        backgroundColor: backgroundColor,
+        backgroundColor: cs.surface,
         appBar: AppBar(
-          backgroundColor: backgroundColor,
+          backgroundColor: cs.surface,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.black,
-              size: 20,
-            ),
+            icon: Icon(Icons.arrow_back_ios_new, color: cs.onSurface, size: 20),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -176,10 +180,16 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("Order details not found"),
+              Text(
+                "Order details not found",
+                style: TextStyle(color: cs.onSurface),
+              ),
               const SizedBox(height: 12),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: primaryColor),
+                style: FilledButton.styleFrom(
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
+                ),
                 onPressed: _fetchOrderDetail,
                 child: const Text("Retry"),
               ),
@@ -191,25 +201,34 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     final order = _orderDetail!;
     final canCancelOrder = _canCancel(order.status);
+    final isCancelled = order.status.toUpperCase() == 'CANCELLED';
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: backgroundColor,
+        backgroundColor: cs.surface,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
-            size: 20,
-          ),
           onPressed: () => Navigator.pop(context),
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+              border: Border.all(color: cs.onSurface, width: 2),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: cs.onSurface,
+            ),
+          ),
         ),
-        title: const Text(
+        title: Text(
           "Order Details",
           style: TextStyle(
-            color: Colors.black,
+            color: cs.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -224,8 +243,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF8F0),
+                color: c.card,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: c.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,7 +255,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: order.items.length,
                     separatorBuilder: (_, __) =>
-                        const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                        Divider(height: 20, color: c.border),
                     itemBuilder: (context, index) {
                       final item = order.items[index];
                       return Column(
@@ -243,10 +263,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         children: [
                           Text(
                             item.productName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: cs.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -257,14 +277,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 "Size: ${item.size.isNotEmpty ? item.size : 'N/A'}  |  Qty: ${item.quantity}",
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Colors.black.withOpacity(0.6),
+                                  color: c.mutedText,
                                 ),
                               ),
                               Text(
                                 "${order.currencySymbol}${item.parsedTotalPrice.toStringAsFixed(0)}",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
+                                  color: cs.onSurface,
                                 ),
                               ),
                             ],
@@ -273,16 +294,16 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       );
                     },
                   ),
-                  const Divider(height: 24, color: Color(0xFFE5DDD2)),
+                  Divider(height: 24, color: c.border),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "Order Number : ${order.orderNumber}",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                          color: cs.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -293,9 +314,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: order.status.toUpperCase() == 'CANCELLED'
-                                ? Colors.red.shade700
-                                : primaryColor,
+                            color: isCancelled ? cs.error : cs.primary,
                           ),
                         ),
                       ),
@@ -311,7 +330,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: order.status.toUpperCase() == 'CANCELLED'
+                    onPressed: isCancelled
                         ? null
                         : () {
                             Navigator.of(context).push(
@@ -323,15 +342,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                           },
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: primaryColor),
+                      side: BorderSide(color: cs.primary),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       "Track order",
                       style: TextStyle(
-                        color: primaryColor,
+                        color: cs.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -347,29 +366,25 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       side: BorderSide(
-                        color: canCancelOrder ? primaryColor : Colors.black26,
+                        color: canCancelOrder ? cs.primary : cs.outline,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                     child: _isCancelling
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: primaryColor,
+                              color: cs.primary,
                             ),
                           )
                         : Text(
-                            order.status.toUpperCase() == 'CANCELLED'
-                                ? "Cancelled"
-                                : "Cancel order",
+                            isCancelled ? "Cancelled" : "Cancel order",
                             style: TextStyle(
-                              color: canCancelOrder
-                                  ? primaryColor
-                                  : Colors.black38,
+                              color: canCancelOrder ? cs.primary : c.mutedText,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
@@ -382,15 +397,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             const SizedBox(height: 20),
 
             // Delivery Details Section
-            const Text(
+            Text(
               "Delivery Details",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFE5DDD2),
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -415,15 +434,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             const SizedBox(height: 20),
 
             // Pricing Details Section
-            const Text(
+            Text(
               "Pricing Details",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
             ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFE5DDD2),
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -442,15 +465,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                         // Download invoice file action
                       },
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: primaryColor),
+                        side: BorderSide(color: cs.primary),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         "DOWNLOAD INVOICE",
                         style: TextStyle(
-                          color: primaryColor,
+                          color: cs.primary,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
@@ -468,6 +491,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   }
 
   Widget _detailRow(String title, String value) {
+    final onSurface = context.cs.onSurface;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -475,17 +500,26 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           width: 80,
           child: Text(
             title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: onSurface,
+            ),
           ),
         ),
         Expanded(
-          child: Text(value, style: const TextStyle(fontSize: 13, height: 1.3)),
+          child: Text(
+            value,
+            style: TextStyle(fontSize: 13, height: 1.3, color: onSurface),
+          ),
         ),
       ],
     );
   }
 
   Widget _pricingRow(String label, String value, {bool isBold = false}) {
+    final onSurface = context.cs.onSurface;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -494,6 +528,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            color: onSurface,
           ),
         ),
         Text(
@@ -501,7 +536,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: Colors.black,
+            color: onSurface,
           ),
         ),
       ],

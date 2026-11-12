@@ -11,12 +11,15 @@ class GettingStartedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+
     return Theme(
       data: Theme.of(context).copyWith(
         textTheme: Theme.of(context).textTheme.apply(fontFamily: 'sans-serif'),
       ),
       child: Scaffold(
-        backgroundColor: const Color(0xFFEEE9E4),
+        backgroundColor: scheme.surface,
         body: SafeArea(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(
@@ -30,7 +33,7 @@ class GettingStartedScreen extends StatelessWidget {
                   'assets/images/pic1.svg',
                   height: size.height * 0.3,
                   fit: BoxFit.contain,
-                  color: const Color(0xFFEEE9E4),
+                  color: isDark ? null : scheme.surface,
                   colorBlendMode: BlendMode.multiply,
                 ),
 
@@ -41,6 +44,7 @@ class GettingStartedScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: size.width * 0.065,
                     fontWeight: FontWeight.bold,
+                    color: scheme.onSurface,
                   ),
                 ),
 
@@ -48,7 +52,10 @@ class GettingStartedScreen extends StatelessWidget {
 
                 Text(
                   'Sign in to your account or create a account',
-                  style: TextStyle(fontSize: size.width * 0.04),
+                  style: TextStyle(
+                    fontSize: size.width * 0.04,
+                    color: scheme.onSurface,
+                  ),
                   textAlign: TextAlign.center,
                 ),
 
@@ -64,8 +71,8 @@ class GettingStartedScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8B2E3E),
-                    foregroundColor: Colors.white,
+                    backgroundColor: scheme.primary,
+                    foregroundColor: scheme.onPrimary,
                     minimumSize: Size(double.infinity, size.height * 0.065),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -93,9 +100,9 @@ class GettingStartedScreen extends StatelessWidget {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF8B2E3E),
+                    foregroundColor: scheme.primary,
                     minimumSize: Size(double.infinity, size.height * 0.065),
-                    side: const BorderSide(color: Color(0xFF8B2E3E), width: 1),
+                    side: BorderSide(color: scheme.primary, width: 1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

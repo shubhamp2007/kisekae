@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/services/buyer_address.dart';
 
 class NewAddressScreen extends StatefulWidget {
@@ -81,11 +82,17 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
   Future<void> _saveAddress() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+
     if (_selectedState == null || _selectedState!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select a state"),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text(
+            "Please select a state",
+            style: TextStyle(color: scheme.onError),
+          ),
+          backgroundColor: scheme.error,
         ),
       );
       return;
@@ -115,9 +122,12 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Address added successfully!"),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: Text(
+            "Address added successfully!",
+            style: TextStyle(color: isDark ? Colors.black : Colors.white),
+          ),
+          backgroundColor: context.appColors.success,
         ),
       );
 
@@ -125,7 +135,10 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(e.toString(), style: TextStyle(color: scheme.onError)),
+          backgroundColor: scheme.error,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -134,9 +147,10 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryBurgundy = Color(0xFF8B2E3E);
-    const pageBgColor = Color(0xFFEFECE6);
-    const cardBgColor = Color(0xFFFFF9F2);
+    final colors = Theme.of(context).colorScheme;
+    final primaryBurgundy = colors.primary;
+    final pageBgColor = colors.surface;
+    final cardBgColor = context.appColors.card;
 
     return Scaffold(
       backgroundColor: pageBgColor,
@@ -150,20 +164,20 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.arrow_back_ios_new,
               size: 18,
-              color: Colors.black,
+              color: colors.onSurface,
             ),
           ),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "New Address",
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontWeight: FontWeight.w600,
             fontSize: 20,
           ),
@@ -176,67 +190,6 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
             key: _formKey,
             child: Column(
               children: [
-                /*Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: cardBgColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on,
-                        color: Colors.black,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              "Adding address to your\ncurrent location ?",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                                height: 1.2,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              "Enable it to auto-fill the address",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBurgundy,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 6,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: const Text(
-                          "Enable",
-                          style: TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),*/
                 const SizedBox(height: 16),
 
                 Container(
@@ -248,12 +201,12 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Address Details",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: colors.onSurface,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -343,6 +296,7 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
                       DropdownButtonFormField<String>(
                         initialValue: _selectedState,
                         isExpanded: true,
+                        dropdownColor: context.appColors.card,
                         decoration: _inputDecoration(hintText: "Select"),
                         items: _indianStates.map((state) {
                           return DropdownMenuItem(
@@ -350,8 +304,8 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
                             child: Text(
                               state,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.black87,
+                              style: TextStyle(
+                                color: colors.onSurface,
                                 fontSize: 14,
                               ),
                             ),
@@ -376,12 +330,12 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Contact Details",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: colors.onSurface,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -396,7 +350,7 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
                                   _isMyself
                                       ? Icons.radio_button_checked
                                       : Icons.radio_button_unchecked,
-                                  color: Colors.black,
+                                  color: colors.onSurface,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 6),
@@ -419,7 +373,7 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
                                   !_isMyself
                                       ? Icons.radio_button_checked
                                       : Icons.radio_button_unchecked,
-                                  color: Colors.black,
+                                  color: colors.onSurface,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 6),
@@ -496,19 +450,19 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
                     onPressed: _isSaving ? null : _saveAddress,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryBurgundy,
-                      foregroundColor: Colors.white,
+                      foregroundColor: colors.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(26),
                       ),
                       elevation: 0,
                     ),
                     child: _isSaving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 22,
                             height: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: Colors.white,
+                              color: colors.onPrimary,
                             ),
                           )
                         : const Text(
@@ -535,10 +489,10 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
       padding: const EdgeInsets.only(bottom: 6, top: 10),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w500,
-          color: Colors.black87,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );
@@ -558,18 +512,22 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
       maxLength: maxLength,
       inputFormatters: inputFormatters,
       validator: validator,
-      style: const TextStyle(fontSize: 14, color: Colors.black87),
+      style: TextStyle(
+        fontSize: 14,
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
       decoration: _inputDecoration(hintText: hintText),
     );
   }
 
   InputDecoration _inputDecoration({String? hintText}) {
+    final colors = Theme.of(context).colorScheme;
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
+      hintStyle: TextStyle(color: context.appColors.mutedText, fontSize: 13),
       filled: true,
       counterText: "", // Suppresses the default bottom character counter
-      fillColor: const Color(0xFFECE4E4),
+      fillColor: colors.surfaceContainerHighest,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -581,15 +539,15 @@ class _NewAddressScreenState extends State<NewAddressScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFF8B2E3E), width: 1.5),
+        borderSide: BorderSide(color: colors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Colors.red, width: 1),
+        borderSide: BorderSide(color: colors.error, width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: BorderSide(color: colors.error, width: 1.5),
       ),
     );
   }

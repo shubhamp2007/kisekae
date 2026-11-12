@@ -3,15 +3,10 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/ar_model.dart';
 import 'package:kisekae/services/ar_service.dart';
-
-const _bg = Color(0xFFEFE8DF);
-const _primary = Color(0xFF8B2E3E);
-const _card = Color(0xFFFBF8F5);
-const _border = Color(0xFFD3C7B8);
-const _canvas = Color(0xFFE0D8CD);
 
 class TryOnHistoryScreen extends StatefulWidget {
   const TryOnHistoryScreen({super.key});
@@ -92,13 +87,14 @@ class _TryOnHistoryScreenState extends State<TryOnHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: colors.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: colors.onSurface,
         title: const Text(
           'Try-On History',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -109,8 +105,10 @@ class _TryOnHistoryScreenState extends State<TryOnHistoryScreen> {
   }
 
   Widget _buildBody() {
+    final colors = Theme.of(context).colorScheme;
+
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _primary));
+      return Center(child: CircularProgressIndicator(color: colors.primary));
     }
 
     if (_error != null && _items.isEmpty) {
@@ -131,7 +129,7 @@ class _TryOnHistoryScreenState extends State<TryOnHistoryScreen> {
     }
 
     return RefreshIndicator(
-      color: _primary,
+      color: colors.primary,
       onRefresh: () => _load(showSpinner: false),
       child: GridView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -186,6 +184,7 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     print(item);
     final url = item.resultImageUrl;
     final hasImage = item.isReady && url != null && url.isNotEmpty;
@@ -195,9 +194,9 @@ class _HistoryCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: _card,
+          color: context.appColors.card,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _border),
+          border: Border.all(color: context.appColors.border),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -206,7 +205,7 @@ class _HistoryCard extends StatelessWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: _canvas,
+                color: colors.outlineVariant,
                 child: hasImage
                     ? Image.network(
                         url,
@@ -214,19 +213,19 @@ class _HistoryCard extends StatelessWidget {
                         alignment: Alignment.topCenter,
                         loadingBuilder: (_, child, progress) => progress == null
                             ? child
-                            : const Center(
+                            : Center(
                                 child: SizedBox(
                                   width: 22,
                                   height: 22,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: _primary,
+                                    color: colors.primary,
                                   ),
                                 ),
                               ),
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorBuilder: (_, __, ___) => Icon(
                           Icons.image_not_supported_outlined,
-                          color: Colors.black38,
+                          color: colors.outline,
                           size: 36,
                         ),
                       )
@@ -260,7 +259,10 @@ class _HistoryCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     _formatDate(item.createdAt),
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -279,6 +281,7 @@ class _StatusPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final failed = item.isFailed;
     return Center(
       child: Column(
@@ -287,7 +290,7 @@ class _StatusPlaceholder extends StatelessWidget {
           Icon(
             failed ? Icons.error_outline : Icons.hourglass_top,
             size: 32,
-            color: failed ? Colors.red : Colors.black45,
+            color: failed ? colors.error : colors.onSurfaceVariant,
           ),
           const SizedBox(height: 6),
           Text(
@@ -295,7 +298,7 @@ class _StatusPlaceholder extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: failed ? Colors.red : Colors.black54,
+              color: failed ? colors.error : colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -361,6 +364,7 @@ class _TryOnDeepLinkScreenState extends State<TryOnDeepLinkScreen> {
       );
     }
 
+    final colors = Theme.of(context).colorScheme;
     final req = _request;
 
     if (req != null && req.isReady && (req.resultImageUrl ?? '').isNotEmpty) {
@@ -375,15 +379,18 @@ class _TryOnDeepLinkScreenState extends State<TryOnDeepLinkScreen> {
         : _error ?? 'The try-on result is not ready yet.';
 
     return Scaffold(
-      backgroundColor: _bg,
-      appBar: AppBar(backgroundColor: _bg, foregroundColor: Colors.black),
+      backgroundColor: colors.surface,
+      appBar: AppBar(
+        backgroundColor: colors.surface,
+        foregroundColor: colors.onSurface,
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Colors.black54),
+            style: TextStyle(fontSize: 16, color: colors.onSurfaceVariant),
           ),
         ),
       ),
@@ -391,6 +398,7 @@ class _TryOnDeepLinkScreenState extends State<TryOnDeepLinkScreen> {
   }
 }
 
+// Full-screen photo viewer: intentionally black in both themes.
 class TryOnImageViewerScreen extends StatefulWidget {
   final String url;
   final String title;
@@ -516,13 +524,14 @@ class _Message extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: _primary.withOpacity(0.6)),
+            Icon(icon, size: 56, color: colors.primary.withValues(alpha: 0.6)),
             const SizedBox(height: 12),
             Text(
               title,
@@ -534,13 +543,16 @@ class _Message extends StatelessWidget {
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                style: TextStyle(fontSize: 14, color: colors.onSurfaceVariant),
               ),
             ],
             if (actionLabel != null) ...[
               const SizedBox(height: 16),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: _primary),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
+                ),
                 onPressed: onAction,
                 child: Text(actionLabel!),
               ),

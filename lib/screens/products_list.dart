@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/product_detail.dart';
 import 'package:kisekae/screens/filter_screen.dart';
 import 'package:kisekae/screens/product_screen.dart';
@@ -103,9 +104,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
           _wishlistedProductIds.add(item.product.id);
         }
       });
-    } catch (_) {
-      // Ignored for unauthenticated users
-    }
+    } catch (_) {}
   }
 
   Future<void> _fetchProducts() async {
@@ -232,8 +231,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
+    final colors = Theme.of(context).colorScheme;
+    final backgroundColor = colors.surface;
+    final primaryColor = colors.primary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -248,12 +248,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.arrow_back_ios_new,
               size: 18,
-              color: Colors.black,
+              color: colors.onSurface,
             ),
           ),
         ),
@@ -263,31 +263,39 @@ class _ProductListScreenState extends State<ProductListScreen> {
           margin: const EdgeInsets.only(right: 8),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: const Color(0xFFFBF8F5),
+            color: context.appColors.card,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFFD3C7B8)),
+            border: Border.all(color: context.appColors.border),
           ),
           child: Row(
             children: [
-              const Icon(Icons.search, color: Colors.black87, size: 20),
+              Icon(Icons.search, color: colors.onSurface, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
                   controller: _searchController,
                   textInputAction: TextInputAction.search,
+                  style: TextStyle(color: colors.onSurface),
+                  cursorColor: colors.primary,
                   onSubmitted: (value) {
                     FocusScope.of(context).unfocus();
                     _searchQuery = value.trim();
                     _fetchProducts();
                   },
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: "EXPLORE YOUR STYLE",
                     hintStyle: TextStyle(
                       fontSize: 13,
-                      color: Colors.black54,
+                      color: colors.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
+                    filled: false,
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    errorBorder: InputBorder.none,
+                    focusedErrorBorder: InputBorder.none,
                     isDense: true,
                   ),
                 ),
@@ -300,9 +308,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
                     _searchQuery = '';
                     _fetchProducts();
                   },
-                  child: const Icon(
+                  child: Icon(
                     Icons.clear,
-                    color: Colors.black54,
+                    color: colors.onSurfaceVariant,
                     size: 18,
                   ),
                 ),
@@ -316,12 +324,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
               height: 46,
               width: 46,
               decoration: BoxDecoration(
-                color: const Color(0xFFFBF8F5),
+                color: context.appColors.card,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFD3C7B8)),
+                border: Border.all(color: context.appColors.border),
               ),
               child: IconButton(
-                icon: const Icon(Icons.tune, color: Colors.black, size: 20),
+                icon: Icon(Icons.tune, color: colors.onSurface, size: 20),
                 onPressed: () async {
                   FocusScope.of(context).unfocus();
                   final result = await Navigator.of(context)
@@ -371,19 +379,21 @@ class _ProductListScreenState extends State<ProductListScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFF8B2E3E)
-                            : const Color(0xFFFBF8F5),
+                            ? colors.primary
+                            : context.appColors.card,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF8B2E3E)
-                              : const Color(0xFFD3C7B8),
+                              ? colors.primary
+                              : context.appColors.border,
                         ),
                       ),
                       child: Text(
                         filter.label,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
+                          color: isSelected
+                              ? colors.onPrimary
+                              : colors.onSurface,
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                         ),
@@ -398,15 +408,15 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
             Expanded(
               child: _isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(color: primaryColor),
                     )
                   : RefreshIndicator(
                       onRefresh: _fetchProducts,
                       color: primaryColor,
                       child: _products.isEmpty
-                          ? const CustomScrollView(
-                              physics: AlwaysScrollableScrollPhysics(),
+                          ? CustomScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
                               slivers: [
                                 SliverFillRemaining(
                                   hasScrollBody: false,
@@ -416,7 +426,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
-                                        color: Colors.black54,
+                                        color: colors.onSurfaceVariant,
                                       ),
                                     ),
                                   ),
@@ -430,38 +440,39 @@ class _ProductListScreenState extends State<ProductListScreen> {
                                 SliverGrid(
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    childAspectRatio: 0.68,
-                                    crossAxisSpacing: 14,
-                                    mainAxisSpacing: 16,
-                                  ),
-                                  delegate: SliverChildBuilderDelegate(
-                                    (context, index) {
-                                      final product = _products[index];
-                                      return GestureDetector(
-                                        behavior: HitTestBehavior.opaque,
-                                        onTap: () {
-                                          FocusScope.of(context).unfocus();
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (_) =>
-                                                  ProductDetailsScreen(
-                                                productId: product.id,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        child: _buildProductCard(product),
-                                      );
-                                    },
-                                    childCount: _products.length,
-                                  ),
+                                        crossAxisCount: 2,
+                                        childAspectRatio: 0.68,
+                                        crossAxisSpacing: 14,
+                                        mainAxisSpacing: 16,
+                                      ),
+                                  delegate: SliverChildBuilderDelegate((
+                                    context,
+                                    index,
+                                  ) {
+                                    final product = _products[index];
+                                    return GestureDetector(
+                                      behavior: HitTestBehavior.opaque,
+                                      onTap: () {
+                                        FocusScope.of(context).unfocus();
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                ProductDetailsScreen(
+                                                  productId: product.id,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      child: _buildProductCard(product),
+                                    );
+                                  }, childCount: _products.length),
                                 ),
                                 if (_isLoadingMore)
-                                  const SliverToBoxAdapter(
+                                  SliverToBoxAdapter(
                                     child: Padding(
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 20),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 20,
+                                      ),
                                       child: Center(
                                         child: SizedBox(
                                           width: 28,
@@ -489,6 +500,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   Widget _buildProductCard(ProductDetail product) {
+    final colors = Theme.of(context).colorScheme;
     final isWishlisted = _wishlistedProductIds.contains(product.id);
     final imageUrl = product.imageUrl ?? product.thumbnail ?? '';
     final hasStore = product.storeName.trim().isNotEmpty;
@@ -503,7 +515,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
-                  color: const Color(0xFFE0D8CD),
+                  color: colors.outlineVariant,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: imageUrl.startsWith('http')
@@ -521,11 +533,11 @@ class _ProductListScreenState extends State<ProductListScreen> {
                             : 'assets/images/clothes/4.jpg',
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
-                          color: const Color(0xFFD3C7B8),
-                          child: const Icon(
+                          color: colors.surfaceContainerHighest,
+                          child: Icon(
                             Icons.image,
                             size: 40,
-                            color: Colors.black38,
+                            color: colors.outline,
                           ),
                         ),
                       ),
@@ -538,6 +550,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                   child: Container(
                     height: 26,
                     width: 26,
+                    // kept white on purpose: the heart icons are image assets
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -576,7 +589,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: hasStore ? FontWeight.w500 : FontWeight.w400,
-                  color: hasStore ? Colors.black : Colors.black54,
+                  color: hasStore ? colors.onSurface : colors.onSurfaceVariant,
                 ),
               ),
             ),
@@ -585,10 +598,10 @@ class _ProductListScreenState extends State<ProductListScreen> {
             const SizedBox(width: 2),
             Text(
               product.averageRating.toStringAsFixed(1),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: colors.onSurface,
               ),
             ),
           ],
@@ -598,18 +611,18 @@ class _ProductListScreenState extends State<ProductListScreen> {
             product.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: Colors.black54,
+              color: colors.onSurfaceVariant,
             ),
           ),
         Text(
           "₹${double.tryParse(product.price)?.toInt() ?? product.price}",
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Colors.black,
+            color: colors.onSurface,
           ),
         ),
       ],

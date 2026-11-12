@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
+import "package:kisekae/core/notifications/theme/app_theme.dart";
 import "package:kisekae/screens/products_list.dart";
-import "package:kisekae/screens/search.dart";
 import "package:kisekae/widgets/bottom_bar.dart";
 import "package:kisekae/widgets/searchbar.dart";
 
@@ -77,15 +77,22 @@ class _MensSubCategoriesScreenState extends State<MensSubCategoriesScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: context.cs.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: context.cs.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "Men's fashion",
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: context.cs.onSurface,
+          ),
         ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(58),
@@ -105,7 +112,11 @@ class _MensSubCategoriesScreenState extends State<MensSubCategoriesScreen> {
                   const SizedBox(height: 24),
                   Text(
                     'Categories',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: context.cs.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -229,6 +240,17 @@ class _MensSubCategoriesScreenState extends State<MensSubCategoriesScreen> {
   }
 
   Widget _buildFestive() {
+    final cs = context.cs;
+    final isDark = cs.brightness == Brightness.dark;
+
+    // Same maroon radial gradient as before, derived from the theme primary
+    // so it follows light/dark automatically.
+    final gradientColors = [
+      cs.primary,
+      Color.lerp(cs.primary, Colors.black, 0.35)!,
+      Color.lerp(cs.primary, Colors.black, 0.65)!,
+    ];
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -257,22 +279,18 @@ class _MensSubCategoriesScreenState extends State<MensSubCategoriesScreen> {
                 height: _barHeight,
                 padding: const EdgeInsets.only(top: 12),
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: RadialGradient(
                     center: Alignment.center,
                     radius: 2.2,
-                    colors: [
-                      Color(0xFF8B2E3E),
-                      Color(0xFF5E1F2A),
-                      Color(0xFF311016),
-                    ],
-                    stops: [0.0, 0.6, 1.0],
+                    colors: gradientColors,
+                    stops: const [0.0, 0.6, 1.0],
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   'TRY NOW WITH AR',
                   style: TextStyle(
-                    color: Color(0xFFF3E9EA),
+                    color: cs.onPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 1,
@@ -304,7 +322,9 @@ class _MensSubCategoriesScreenState extends State<MensSubCategoriesScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: const Color(0xFF1E1A19),
+                          // Dark frame in light mode, softer outline in dark
+                          // mode (a near-black border would vanish on 121212).
+                          color: isDark ? cs.outline : cs.onSurface,
                           width: 1.5,
                         ),
                       ),
@@ -346,8 +366,8 @@ class _MensSubCategoriesScreenState extends State<MensSubCategoriesScreen> {
       width: double.infinity,
       height: double.infinity,
       errorBuilder: (_, __, ___) => Container(
-        color: const Color(0xFFE0D8CD),
-        child: const Icon(Icons.image, size: 36, color: Colors.black38),
+        color: context.cs.surfaceContainerHighest,
+        child: Icon(Icons.image, size: 36, color: context.cs.onSurfaceVariant),
       ),
     );
   }
@@ -376,7 +396,11 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       text,
       textAlign: TextAlign.center,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+        color: context.cs.onSurface,
+      ),
     );
   }
 }
@@ -393,6 +417,7 @@ class _CategoryImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -408,7 +433,10 @@ class _CategoryImage extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 27,
-              backgroundColor: const Color(0xFFDBBEC3),
+              backgroundColor: Color.alphaBlend(
+                cs.primary.withAlpha(51),
+                cs.surface,
+              ),
               child: ClipOval(
                 child: Image.asset(
                   imageUrl,
@@ -424,7 +452,11 @@ class _CategoryImage extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: cs.onSurface,
+              ),
             ),
           ],
         ),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/store_create.dart';
 import 'package:kisekae/services/store.dart';
@@ -128,12 +129,21 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
   }
 
   void _showMessage(String text, {bool error = false}) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(text),
-          backgroundColor: error ? Colors.red : Colors.green,
+          content: Text(
+            text,
+            style: TextStyle(
+              color: error
+                  ? scheme.onError
+                  : (isDark ? Colors.black : Colors.white),
+            ),
+          ),
+          backgroundColor: error ? scheme.error : context.appColors.success,
         ),
       );
   }
@@ -314,7 +324,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF9F2),
+              color: context.appColors.card,
               borderRadius: BorderRadius.circular(16),
               boxShadow: const [
                 BoxShadow(
@@ -437,7 +447,7 @@ class _EditStoreScreenState extends State<EditStoreScreen> {
                             : 'Your store is hidden from shoppers',
                         style: TextStyle(
                           fontSize: 12,
-                          color: cs.onSurface.withOpacity(0.65),
+                          color: cs.onSurface.withValues(alpha: 0.65),
                         ),
                       ),
                     ),
@@ -511,7 +521,10 @@ class _ImageTile extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           hint,
-          style: TextStyle(fontSize: 10, color: cs.onSurface.withOpacity(0.7)),
+          style: TextStyle(
+            fontSize: 10,
+            color: cs.onSurface.withValues(alpha: 0.7),
+          ),
         ),
       ],
     );
@@ -536,9 +549,9 @@ class _ImageTile extends StatelessWidget {
         height: 110,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFCF8),
+          color: cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF9A9A9A)),
+          border: Border.all(color: cs.outline),
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -551,9 +564,9 @@ class _ImageTile extends StatelessWidget {
                 bottom: 8,
                 child: Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xE6FFFFFF),
+                    color: cs.surface.withValues(alpha: 0.9),
                   ),
                   child: Icon(Icons.edit_outlined, size: 18, color: cs.primary),
                 ),

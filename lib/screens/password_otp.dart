@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 
 import 'dart:async';
 
@@ -50,6 +51,20 @@ class _PasswordOTPState extends State<PasswordOTP> {
     }
     _timer?.cancel();
     super.dispose();
+  }
+
+  void _showSnack(String message, {required bool success}) {
+    final bg = success ? context.appColors.success : context.cs.error;
+    final fg = ThemeData.estimateBrightnessForColor(bg) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(color: fg)),
+        backgroundColor: bg,
+      ),
+    );
   }
 
   void _onChanged(String value, int index) {
@@ -137,12 +152,7 @@ class _PasswordOTPState extends State<PasswordOTP> {
       if (response.success) {
         final resetToken = response.data?["reset_token"]?.toString() ?? "";
         if (resetToken.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Reset token missing from response"),
-              backgroundColor: Colors.red,
-            ),
-          );
+          _showSnack("Reset token missing from response", success: false);
           return;
         }
         Navigator.push(
@@ -157,12 +167,7 @@ class _PasswordOTPState extends State<PasswordOTP> {
       }
 
       if (response.message.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
-          ),
-        );
+        _showSnack(response.message, success: response.success);
       }
     } finally {
       if (mounted) setState(() => _verifying = false);
@@ -180,12 +185,7 @@ class _PasswordOTPState extends State<PasswordOTP> {
       if (!mounted) return;
       if (response.success) _startTimer();
       if (response.message.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
-          ),
-        );
+        _showSnack(response.message, success: response.success);
       }
     } finally {
       if (mounted) setState(() => _resending = false);
@@ -194,7 +194,7 @@ class _PasswordOTPState extends State<PasswordOTP> {
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colors = Theme.of(context).colorScheme;
+    final colors = context.cs;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -208,15 +208,22 @@ class _PasswordOTPState extends State<PasswordOTP> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "OTP Verification",
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: colors.onSurface,
+          ),
         ),
       ),
       body: Container(
@@ -225,7 +232,10 @@ class _PasswordOTPState extends State<PasswordOTP> {
           children: [
             Text(
               'We have sent a 6 digit code to ${_maskEmail(widget.email)}',
-              style: TextStyle(fontSize: size.width * 0.045),
+              style: TextStyle(
+                fontSize: size.width * 0.045,
+                color: colors.onSurface,
+              ),
             ),
             SizedBox(height: size.height * 0.02),
             Row(
@@ -241,9 +251,10 @@ class _PasswordOTPState extends State<PasswordOTP> {
                     autofocus: index == 0,
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: colors.onSurface,
                     ),
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly,
@@ -280,7 +291,7 @@ class _PasswordOTPState extends State<PasswordOTP> {
                     _errorText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                    style: TextStyle(color: colors.error, fontSize: 14),
                   ),
                 ),
               ),
@@ -290,7 +301,10 @@ class _PasswordOTPState extends State<PasswordOTP> {
               children: [
                 Text(
                   "Didn't receive the code? ",
-                  style: TextStyle(fontSize: size.width * 0.037),
+                  style: TextStyle(
+                    fontSize: size.width * 0.037,
+                    color: colors.onSurface,
+                  ),
                 ),
                 if (_secondsLeft > 0)
                   Text(
@@ -298,7 +312,7 @@ class _PasswordOTPState extends State<PasswordOTP> {
                     style: TextStyle(
                       fontSize: size.width * 0.037,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF8B2E3E),
+                      color: colors.primary,
                     ),
                   )
                 else
@@ -309,8 +323,9 @@ class _PasswordOTPState extends State<PasswordOTP> {
                       style: TextStyle(
                         fontSize: size.width * 0.037,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF8B2E3E),
+                        color: colors.primary,
                         decoration: TextDecoration.underline,
+                        decorationColor: colors.primary,
                       ),
                     ),
                   ),
@@ -323,17 +338,19 @@ class _PasswordOTPState extends State<PasswordOTP> {
               child: FilledButton(
                 onPressed: _verifying ? null : _onVerify,
                 style: FilledButton.styleFrom(
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: _verifying
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 22,
                         width: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          color: Colors.white,
+                          color: colors.onPrimary,
                         ),
                       )
                     : const Text('Verify'),

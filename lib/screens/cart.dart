@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/cart.dart';
 import 'package:kisekae/screens/checkout.dart';
 import 'package:kisekae/screens/product_screen.dart';
@@ -50,18 +51,24 @@ class _CartScreenState extends State<CartScreen> {
     final shouldClear = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear Cart'),
-        content: const Text(
+        backgroundColor: ctx.appColors.card,
+        surfaceTintColor: Colors.transparent,
+        title: Text('Clear Cart', style: TextStyle(color: ctx.cs.onSurface)),
+        content: Text(
           'Are you sure you want to remove all items from your cart?',
+          style: TextStyle(color: ctx.cs.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: ctx.appColors.mutedText),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear', style: TextStyle(color: Colors.red)),
+            child: Text('Clear', style: TextStyle(color: ctx.cs.error)),
           ),
         ],
       ),
@@ -187,12 +194,22 @@ class _CartScreenState extends State<CartScreen> {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Cart Validation Issues'),
+              backgroundColor: ctx.appColors.card,
+              surfaceTintColor: Colors.transparent,
+              title: Text(
+                'Cart Validation Issues',
+                style: TextStyle(color: ctx.cs.onSurface),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: validation.issues
-                    .map((issue) => Text('• $issue'))
+                    .map(
+                      (issue) => Text(
+                        '• $issue',
+                        style: TextStyle(color: ctx.cs.onSurface),
+                      ),
+                    )
                     .toList(),
               ),
               actions: [
@@ -257,6 +274,8 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -266,15 +285,19 @@ class _CartScreenState extends State<CartScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: cs.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: cs.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "My Cart",
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600, color: cs.onSurface),
         ),
         actions: [
           if (_cartModel != null && _cartModel!.items.isNotEmpty)
@@ -282,10 +305,10 @@ class _CartScreenState extends State<CartScreen> {
               padding: const EdgeInsets.only(right: 8.0),
               child: TextButton(
                 onPressed: _isProcessingAction ? null : _confirmClearCart,
-                child: const Text(
+                child: Text(
                   "Clear All",
                   style: TextStyle(
-                    color: Color(0xFF8B2E3E),
+                    color: cs.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -294,24 +317,24 @@ class _CartScreenState extends State<CartScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF8B2E3E)),
-            )
+          ? Center(child: CircularProgressIndicator(color: cs.primary))
           : RefreshIndicator(
               onRefresh: _fetchCart,
-              color: const Color(0xFF8B2E3E),
+              color: cs.primary,
+              backgroundColor: context.appColors.card,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   children: [
                     Expanded(
                       child: _cartModel == null || _cartModel!.items.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
                                 "Your cart is empty",
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w500,
+                                  color: cs.onSurface,
                                 ),
                               ),
                             )
@@ -331,13 +354,14 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                     ),
                     if (_cartModel != null && _cartModel!.items.isNotEmpty) ...[
-                      const Align(
+                      Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
                           "Price details",
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w500,
+                            color: cs.onSurface,
                           ),
                         ),
                       ),
@@ -347,7 +371,7 @@ class _CartScreenState extends State<CartScreen> {
                         decoration: BoxDecoration(
                           shape: BoxShape.rectangle,
                           borderRadius: BorderRadius.circular(16),
-                          color: const Color(0xFFE0E0E0),
+                          color: cs.surfaceContainerHighest,
                         ),
                         child: Column(
                           children: [
@@ -358,11 +382,14 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.place_rounded),
-                          SizedBox(width: 4),
-                          Text("Address-Home (saved address)"),
+                          Icon(Icons.place_rounded, color: cs.onSurface),
+                          const SizedBox(width: 4),
+                          Text(
+                            "Address-Home (saved address)",
+                            style: TextStyle(color: cs.onSurface),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -374,18 +401,18 @@ class _CartScreenState extends State<CartScreen> {
                               ? null
                               : _handleCheckout,
                           style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF8B2E3E),
-                            foregroundColor: Colors.white,
+                            backgroundColor: cs.primary,
+                            foregroundColor: cs.onPrimary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(24),
                             ),
                           ),
                           child: _isProcessingAction
-                              ? const SizedBox(
+                              ? SizedBox(
                                   height: 20,
                                   width: 20,
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: cs.onPrimary,
                                     strokeWidth: 2,
                                   ),
                                 )
@@ -408,6 +435,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget productCard(CartItem item) {
+    final cs = context.cs;
+    final c = context.appColors;
     final imagePath =
         item.product.imageUrl ??
         item.product.thumbnail ??
@@ -416,8 +445,10 @@ class _CartScreenState extends State<CartScreen> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F0),
+        color: c.card,
         borderRadius: BorderRadius.circular(24),
+        // Keeps the card visible against the dark page background.
+        border: Border.all(color: c.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,7 +463,7 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 foregroundDecoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFF8B2E3E), width: 1),
+                  border: Border.all(color: cs.primary, width: 1),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: imagePath.startsWith('http')
@@ -458,31 +489,32 @@ class _CartScreenState extends State<CartScreen> {
                   children: [
                     Text(
                       item.product.name,
-                      style: const TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16, color: cs.onSurface),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       'Size - ${item.size.isEmpty ? "M" : item.size}',
-                      style: const TextStyle(fontSize: 18),
+                      style: TextStyle(fontSize: 18, color: cs.onSurface),
                     ),
                     Text(
                       '₹${item.product.price}',
-                      style: const TextStyle(fontSize: 18),
+                      style: TextStyle(fontSize: 18, color: cs.onSurface),
                     ),
                     const SizedBox(height: 6),
                     Container(
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEE9E4),
+                        color: cs.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.black, width: 1.2),
+                        border: Border.all(color: cs.onSurface, width: 1.2),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
                             padding: EdgeInsets.zero,
+                            color: cs.onSurface,
                             icon: const Icon(Icons.remove, size: 20),
                             onPressed: _isProcessingAction
                                 ? null
@@ -494,10 +526,11 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                           Text(
                             '${item.quantity}',
-                            style: const TextStyle(fontSize: 20),
+                            style: TextStyle(fontSize: 20, color: cs.onSurface),
                           ),
                           IconButton(
                             padding: EdgeInsets.zero,
+                            color: cs.onSurface,
                             icon: const Icon(Icons.add, size: 20),
                             onPressed: _isProcessingAction
                                 ? null
@@ -524,9 +557,9 @@ class _CartScreenState extends State<CartScreen> {
                       ? null
                       : () => _moveToWishlist(item),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF8B2E3E),
+                    foregroundColor: cs.primary,
                     padding: const EdgeInsets.all(8),
-                    side: const BorderSide(color: Color(0xFF8B2E3E)),
+                    side: BorderSide(color: cs.primary),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -541,9 +574,9 @@ class _CartScreenState extends State<CartScreen> {
                       ? null
                       : () => _removeItem(item.id),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF8B2E3E),
+                    foregroundColor: cs.primary,
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    side: const BorderSide(color: Color(0xFF8B2E3E)),
+                    side: BorderSide(color: cs.primary),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -559,6 +592,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget priceRow(String label, int price) {
+    final onSurface = context.cs.onSurface;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -566,10 +601,14 @@ class _CartScreenState extends State<CartScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: onSurface,
+            ),
           ),
           const SizedBox(width: 40),
-          Text('₹$price', style: const TextStyle(fontSize: 18)),
+          Text('₹$price', style: TextStyle(fontSize: 18, color: onSurface)),
         ],
       ),
     );
