@@ -7,6 +7,10 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+configurations.all {
+    exclude(module = "unity-classes")
+}
+
 android {
     namespace = "live.kisekae.app"
     compileSdk = flutter.compileSdkVersion

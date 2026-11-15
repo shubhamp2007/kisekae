@@ -45,6 +45,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 /android/unityLibrary/
+/android/unityLibrary_old/
 
 # Widget Preview related
 .widget_preview/

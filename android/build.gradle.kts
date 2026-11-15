@@ -23,6 +23,11 @@ subprojects {
         pluginManager.withPlugin("com.android.library") {
             dependencies.add("compileOnly", project(":unityLibrary"))
         }
+        configurations.configureEach {
+            if (name == "implementation" || name == "api" || name == "debugImplementation" || name == "releaseImplementation") {
+                dependencies.removeIf { it is org.gradle.api.artifacts.FileCollectionDependency }
+            }
+        }
         afterEvaluate {
             extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
                 compileSdk = 36
