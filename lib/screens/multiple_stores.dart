@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/store_create.dart';
@@ -120,7 +121,7 @@ class _MultipleStoresScreenState extends State<MultipleStoresScreen> {
                 'Choose a store to manage its products, orders and performance',
                 style: TextStyle(
                   fontSize: 13,
-                  color: cs.onSurface.withOpacity(0.7),
+                  color: cs.onSurface.withValues(alpha: 0.7),
                   height: 1.3,
                 ),
               ),
@@ -133,18 +134,15 @@ class _MultipleStoresScreenState extends State<MultipleStoresScreen> {
                 child: OutlinedButton(
                   onPressed: _openCreateOrJoinScreen,
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(
-                      color: Color(0xFF7D2938),
-                      width: 1.2,
-                    ),
+                    side: BorderSide(color: cs.primary, width: 1.2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Create or join new store',
                     style: TextStyle(
-                      color: Color(0xFF7D2938),
+                      color: cs.primary,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
@@ -161,9 +159,7 @@ class _MultipleStoresScreenState extends State<MultipleStoresScreen> {
 
   Widget _buildStoresList(ColorScheme cs) {
     if (_isLoading && _stores.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF7D2938)),
-      );
+      return Center(child: CircularProgressIndicator(color: cs.primary));
     }
 
     if (_error != null && _stores.isEmpty) {
@@ -179,10 +175,7 @@ class _MultipleStoresScreenState extends State<MultipleStoresScreen> {
             const SizedBox(height: 12),
             TextButton(
               onPressed: _loadStores,
-              child: const Text(
-                'Retry',
-                style: TextStyle(color: Color(0xFF7D2938)),
-              ),
+              child: Text('Retry', style: TextStyle(color: cs.primary)),
             ),
           ],
         ),
@@ -208,7 +201,7 @@ class _MultipleStoresScreenState extends State<MultipleStoresScreen> {
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.appColors.card,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
@@ -224,13 +217,13 @@ class _MultipleStoresScreenState extends State<MultipleStoresScreen> {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: const Color(0xFFEADBDE),
+                backgroundColor: cs.primary.withValues(alpha: 0.2),
                 child: Text(
                   firstLetter,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF7D2938),
+                    color: cs.primary,
                   ),
                 ),
               ),
@@ -260,7 +253,7 @@ class _MultipleStoresScreenState extends State<MultipleStoresScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 13,
-                        color: cs.onSurface.withOpacity(0.6),
+                        color: cs.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -277,10 +270,10 @@ class _MultipleStoresScreenState extends State<MultipleStoresScreen> {
                   ? null
                   : () => _openStore(store),
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF7D2938),
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: const Color(0xFFD9C2C6),
-                disabledForegroundColor: Colors.white,
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+                disabledBackgroundColor: cs.primary.withValues(alpha: 0.4),
+                disabledForegroundColor: cs.onPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),

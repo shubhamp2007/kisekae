@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/screens/forgot_password.dart';
-import 'package:kisekae/screens/home_screen.dart';
-import 'package:kisekae/screens/seller_start.dart';
 import 'package:kisekae/screens/signin_otp.dart';
 import 'package:kisekae/screens/verify_code.dart';
 import 'package:kisekae/services/email_auth.dart';
@@ -51,10 +50,20 @@ class _SigninPasswordState extends State<SigninPassword> {
         );
         if (!mounted) return;
         if (otpResponse.message.isNotEmpty) {
+          final scheme = Theme.of(context).colorScheme;
+          final isDark = scheme.brightness == Brightness.dark;
+          final successFg = isDark ? Colors.black : Colors.white;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(otpResponse.message),
-              backgroundColor: otpResponse.success ? Colors.green : Colors.red,
+              content: Text(
+                otpResponse.message,
+                style: TextStyle(
+                  color: otpResponse.success ? successFg : scheme.onError,
+                ),
+              ),
+              backgroundColor: otpResponse.success
+                  ? context.appColors.success
+                  : scheme.error,
             ),
           );
         }
@@ -71,10 +80,14 @@ class _SigninPasswordState extends State<SigninPassword> {
       }
 
       if (response.message.isNotEmpty) {
+        final scheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
-            backgroundColor: Colors.red,
+            content: Text(
+              response.message,
+              style: TextStyle(color: scheme.onError),
+            ),
+            backgroundColor: scheme.error,
           ),
         );
       }
@@ -103,9 +116,13 @@ class _SigninPasswordState extends State<SigninPassword> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
@@ -138,7 +155,7 @@ class _SigninPasswordState extends State<SigninPassword> {
                     _obscurePassword
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
-                    color: Colors.black,
+                    color: colors.onSurface,
                     size: 20,
                   ),
                   onPressed: () {
@@ -204,7 +221,7 @@ class _SigninPasswordState extends State<SigninPassword> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: size.width * 0.04,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
             ),
@@ -222,12 +239,12 @@ class _SigninPasswordState extends State<SigninPassword> {
                   ),
                 ),
                 child: _loading
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: colors.onPrimary,
                         ),
                       )
                     : Text(
@@ -270,7 +287,7 @@ class _TextInput extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final simpleBlackBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(15),
-      borderSide: const BorderSide(color: Colors.black, width: 1),
+      borderSide: BorderSide(color: colors.onSurface, width: 1),
     );
 
     return Column(

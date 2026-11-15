@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/userprofile.dart';
 import 'package:kisekae/screens/onboarding_screen.dart';
 import 'package:kisekae/services/profile_details.dart';
@@ -31,6 +32,21 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _showSnack(String message, {required bool success}) {
+    if (!mounted) return;
+    final bg = success ? context.appColors.success : context.cs.error;
+    final fg = ThemeData.estimateBrightnessForColor(bg) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(color: fg)),
+        backgroundColor: bg,
+      ),
+    );
   }
 
   Future<void> _fetchUserProfile() async {
@@ -75,18 +91,11 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
         _isSavingName = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Name updated successfully!"),
-          backgroundColor: Colors.green,
-        ),
-      );
+      _showSnack("Name updated successfully!", success: true);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSavingName = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      _showSnack(e.toString(), success: false);
     }
   }
 
@@ -99,34 +108,34 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final cs = context.cs;
+            final c = context.appColors;
+
             return AlertDialog(
-              backgroundColor: const Color(0xFFFFF9F2),
+              backgroundColor: c.card,
+              surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
-                side: const BorderSide(color: Color(0xFFB78876)),
+                side: BorderSide(color: cs.outline),
               ),
-              title: const Row(
+              title: Row(
                 children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.red,
-                    size: 28,
-                  ),
-                  SizedBox(width: 8),
+                  Icon(Icons.warning_amber_rounded, color: cs.error, size: 28),
+                  const SizedBox(width: 8),
                   Text(
                     "Deactivate Account",
                     style: TextStyle(
-                      color: Color(0xFF8B2E3E),
+                      color: cs.primary,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
                   ),
                 ],
               ),
-              content: const Text(
+              content: Text(
                 "Are you sure you confirm that you want to deactivate your account? This action will log you out and deactivate your profile.",
                 style: TextStyle(
-                  color: Color(0xFF8B2E3E),
+                  color: cs.onSurface,
                   fontSize: 15,
                   height: 1.4,
                 ),
@@ -136,9 +145,9 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                   onPressed: isDeactivating
                       ? null
                       : () => Navigator.pop(dialogContext),
-                  child: const Text(
+                  child: Text(
                     "Cancel",
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                    style: TextStyle(color: c.mutedText, fontSize: 16),
                   ),
                 ),
                 ElevatedButton(
@@ -155,31 +164,22 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                             Navigator.pop(dialogContext);
 
                             Navigator.pushAndRemoveUntil(
-                              context,
+                              this.context,
                               MaterialPageRoute(
                                 builder: (_) => const OnboardingScreen(),
                               ),
                               (route) => false,
                             );
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(message),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
+                            _showSnack(message, success: true);
                           } catch (e) {
                             setDialogState(() => isDeactivating = false);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(e.toString()),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
+                            _showSnack(e.toString(), success: false);
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade700,
+                    backgroundColor: cs.error,
+                    foregroundColor: cs.onError,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -189,17 +189,17 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                     ),
                   ),
                   child: isDeactivating
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: cs.onError,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           "Confirm",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
+                          style: TextStyle(color: cs.onError, fontSize: 16),
                         ),
                 ),
               ],
@@ -212,6 +212,8 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -221,25 +223,29 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: cs.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: cs.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "Personal Information",
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600, color: cs.onSurface),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: IconButton(
               onPressed: _showDeactivateConfirmationDialog,
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline_rounded,
                 size: 26,
-                color: Colors.red,
+                color: cs.error,
               ),
               tooltip: "Deactivate Account",
             ),
@@ -251,10 +257,11 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
   }
 
   Widget _buildBody() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF8B2E3E)),
-      );
+      return Center(child: CircularProgressIndicator(color: cs.primary));
     }
 
     if (_errorMessage != null) {
@@ -264,18 +271,14 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: Color(0xFF8B2E3E),
-              ),
+              Icon(Icons.error_outline_rounded, size: 48, color: cs.primary),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
-                  color: Color(0xFF8B2E3E),
+                  color: cs.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -283,15 +286,13 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
               ElevatedButton(
                 onPressed: _fetchUserProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B2E3E),
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-                child: const Text(
-                  "Retry",
-                  style: TextStyle(color: Colors.white),
-                ),
+                child: Text("Retry", style: TextStyle(color: cs.onPrimary)),
               ),
             ],
           ),
@@ -302,7 +303,8 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
     final profile = _profile!;
 
     return RefreshIndicator(
-      color: const Color(0xFF8B2E3E),
+      color: cs.primary,
+      backgroundColor: c.card,
       onRefresh: _fetchUserProfile,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -314,32 +316,32 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
               padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(26),
-                color: const Color(0xFFFFF9F2),
-                border: Border.all(color: const Color(0xFFB78876)),
+                color: c.card,
+                border: Border.all(color: cs.outline),
               ),
               child: Column(
                 children: [
                   CircleAvatar(
                     radius: 36,
-                    backgroundColor: const Color(0xFF8B2E3E),
+                    backgroundColor: cs.primary,
                     child: Text(
                       profile.name.isNotEmpty
                           ? profile.name[0].toUpperCase()
                           : 'U',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: cs.onPrimary,
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     profile.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF8B2E3E),
+                      color: cs.primary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -347,7 +349,7 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                     profile.email,
                     style: TextStyle(
                       fontSize: 14,
-                      color: const Color(0xFF8B2E3E).withValues(alpha: 0.7),
+                      color: cs.primary.withAlpha(179),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -369,14 +371,11 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: profile.isEmailVerified
-                      ? Colors.green.withValues(alpha: 0.15)
-                      : Colors.orange.withValues(alpha: 0.15),
+                  color: (profile.isEmailVerified ? c.success : c.warning)
+                      .withAlpha(38),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: profile.isEmailVerified
-                        ? Colors.green
-                        : Colors.orange,
+                    color: profile.isEmailVerified ? c.success : c.warning,
                   ),
                 ),
                 child: Text(
@@ -384,9 +383,7 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: profile.isEmailVerified
-                        ? Colors.green.shade800
-                        : Colors.orange.shade800,
+                    color: profile.isEmailVerified ? c.success : c.warning,
                   ),
                 ),
               ),
@@ -423,38 +420,35 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
   }
 
   Widget _buildNameTile(String currentName) {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: const Color(0xFFFFF9F2),
+        color: c.card,
         border: Border.all(
-          color: _isEditingName
-              ? const Color(0xFF8B2E3E)
-              : const Color(0xFFB78876),
+          color: _isEditingName ? cs.primary : cs.outline,
           width: _isEditingName ? 2 : 1,
         ),
       ),
       child: _isEditingName
           ? Row(
               children: [
-                const Icon(
-                  Icons.person_outline,
-                  size: 22,
-                  color: Color(0xFF8B2E3E),
-                ),
+                Icon(Icons.person_outline, size: 22, color: cs.primary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: TextField(
                     controller: _nameController,
                     autofocus: true,
                     enabled: !_isSavingName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF8B2E3E),
+                      color: cs.primary,
                     ),
                     decoration: const InputDecoration(
                       isDense: true,
@@ -464,17 +458,17 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                   ),
                 ),
                 if (_isSavingName)
-                  const SizedBox(
+                  SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFF8B2E3E),
+                      color: cs.primary,
                     ),
                   )
                 else ...[
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.grey, size: 20),
+                    icon: Icon(Icons.close, color: c.mutedText, size: 20),
                     onPressed: () {
                       setState(() {
                         _isEditingName = false;
@@ -483,11 +477,7 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(
-                      Icons.check,
-                      color: Color(0xFF8B2E3E),
-                      size: 22,
-                    ),
+                    icon: Icon(Icons.check, color: cs.primary, size: 22),
                     onPressed: _saveName,
                   ),
                 ],
@@ -495,11 +485,7 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
             )
           : Row(
               children: [
-                const Icon(
-                  Icons.person_outline,
-                  size: 22,
-                  color: Color(0xFF8B2E3E),
-                ),
+                Icon(Icons.person_outline, size: 22, color: cs.primary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -509,18 +495,17 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                         "Full Name",
                         style: TextStyle(
                           fontSize: 12,
-                          color: const Color(0xFF8B2E3E)
-                              .withValues(alpha: 0.65),
+                          color: cs.primary.withAlpha(166),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         currentName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF8B2E3E),
+                          color: cs.primary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -535,11 +520,7 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                       _nameController.text = currentName;
                     });
                   },
-                  icon: const Icon(
-                    Icons.edit_outlined,
-                    size: 20,
-                    color: Color(0xFF8B2E3E),
-                  ),
+                  icon: Icon(Icons.edit_outlined, size: 20, color: cs.primary),
                 ),
               ],
             ),
@@ -552,17 +533,20 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
     required String value,
     Widget? trailingWidget,
   }) {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: const Color(0xFFFFF9F2),
-        border: Border.all(color: const Color(0xFFB78876)),
+        color: c.card,
+        border: Border.all(color: cs.outline),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 22, color: const Color(0xFF8B2E3E)),
+          Icon(icon, size: 22, color: cs.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -572,17 +556,17 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: const Color(0xFF8B2E3E).withValues(alpha: 0.65),
+                    color: cs.primary.withAlpha(166),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF8B2E3E),
+                    color: cs.primary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

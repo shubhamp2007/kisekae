@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/autocomplete.dart';
 import 'package:kisekae/models/history.dart';
@@ -175,12 +176,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
+    final cs = context.cs;
+    final c = context.appColors;
     final isSearching = _searchController.text.trim().length >= 2;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -202,22 +203,22 @@ class _SearchScreenState extends State<SearchScreen> {
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black, width: 2),
+                            border: Border.all(color: cs.onSurface, width: 2),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.arrow_back_ios_new,
                             size: 16,
-                            color: Colors.black,
+                            color: cs.onSurface,
                           ),
                         ),
                       ),
                     ),
-                    const Text(
+                    Text(
                       "Search",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                   ],
@@ -230,31 +231,36 @@ class _SearchScreenState extends State<SearchScreen> {
                 height: 46,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFBF8F5),
+                  color: c.card,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFD3C7B8)),
+                  border: Border.all(color: c.border),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.search, color: Colors.black87, size: 20),
+                    Icon(Icons.search, color: cs.onSurface, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _searchController,
                         textInputAction: TextInputAction.search,
+                        style: TextStyle(color: cs.onSurface),
+                        cursorColor: cs.primary,
                         onChanged: (val) {
                           _onSearchChanged(val);
                           setState(() {});
                         },
                         onSubmitted: _search,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: "EXPLORE YOUR STYLE",
                           hintStyle: TextStyle(
                             fontSize: 13,
-                            color: Colors.black54,
+                            color: c.mutedText,
                             fontWeight: FontWeight.w500,
                           ),
+                          filled: false,
                           border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
                           isDense: true,
                         ),
                       ),
@@ -266,11 +272,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           _onSearchChanged('');
                           setState(() {});
                         },
-                        child: const Icon(
-                          Icons.clear,
-                          color: Colors.black54,
-                          size: 18,
-                        ),
+                        child: Icon(Icons.clear, color: c.mutedText, size: 18),
                       ),
                   ],
                 ),
@@ -280,8 +282,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
               Expanded(
                 child: isSearching
-                    ? _buildAutocompleteSection(primaryColor)
-                    : _buildHistorySection(primaryColor),
+                    ? _buildAutocompleteSection()
+                    : _buildHistorySection(),
               ),
             ],
           ),
@@ -290,20 +292,23 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildAutocompleteSection(Color primaryColor) {
+  Widget _buildAutocompleteSection() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     if (_isLoadingAutocomplete) {
-      return Center(child: CircularProgressIndicator(color: primaryColor));
+      return Center(child: CircularProgressIndicator(color: cs.primary));
     }
 
     final queries = _autocompleteData?.queries ?? [];
     final instantProducts = _autocompleteData?.instantProducts ?? [];
 
     if (queries.isEmpty && instantProducts.isEmpty) {
-      return const Align(
+      return Align(
         alignment: Alignment.topLeft,
         child: Text(
           "No suggestions found",
-          style: TextStyle(fontSize: 14, color: Colors.black54),
+          style: TextStyle(fontSize: 14, color: c.mutedText),
         ),
       );
     }
@@ -311,14 +316,12 @@ class _SearchScreenState extends State<SearchScreen> {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        // Suggested Query Phrases
         if (queries.isNotEmpty) ...[
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: queries.length,
-            separatorBuilder: (_, __) =>
-                const Divider(height: 1, color: Color(0xFFD3C7B8)),
+            separatorBuilder: (_, __) => Divider(height: 1, color: c.border),
             itemBuilder: (context, index) {
               final queryText = queries[index];
               return InkWell(
@@ -327,23 +330,19 @@ class _SearchScreenState extends State<SearchScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     children: [
-                      const Icon(Icons.search, size: 18, color: Colors.black54),
+                      Icon(Icons.search, size: 18, color: c.mutedText),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           queryText,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.black87,
+                            color: cs.onSurface,
                           ),
                         ),
                       ),
-                      const Icon(
-                        Icons.north_west,
-                        size: 14,
-                        color: Colors.black38,
-                      ),
+                      Icon(Icons.north_west, size: 14, color: c.mutedText),
                     ],
                   ),
                 ),
@@ -353,11 +352,14 @@ class _SearchScreenState extends State<SearchScreen> {
           const SizedBox(height: 20),
         ],
 
-        // Instant Products
         if (instantProducts.isNotEmpty) ...[
-          const Text(
+          Text(
             "Instant Results",
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: cs.onSurface,
+            ),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -380,9 +382,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   child: Container(
                     width: 120,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFBF8F5),
+                      color: c.card,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFD3C7B8)),
+                      border: Border.all(color: c.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,13 +399,14 @@ class _SearchScreenState extends State<SearchScreen> {
                             ),
                           ),
                           child: (imageUrl == null || imageUrl.isEmpty)
-                              ? Container(color: const Color(0xFFE0D8CD))
+                              ? Container(color: cs.surfaceContainerHighest)
                               : Image.network(
                                   imageUrl,
                                   fit: BoxFit.cover,
                                   alignment: Alignment.topCenter,
-                                  errorBuilder: (_, __, ___) =>
-                                      Container(color: const Color(0xFFE0D8CD)),
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: cs.surfaceContainerHighest,
+                                  ),
                                 ),
                         ),
                         Padding(
@@ -415,9 +418,10 @@ class _SearchScreenState extends State<SearchScreen> {
                                 product.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
+                                  color: cs.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -426,7 +430,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: primaryColor,
+                                  color: cs.primary,
                                 ),
                               ),
                             ],
@@ -445,17 +449,20 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildHistorySection(Color primaryColor) {
+  Widget _buildHistorySection() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     if (_isLoadingHistory) {
-      return Center(child: CircularProgressIndicator(color: primaryColor));
+      return Center(child: CircularProgressIndicator(color: cs.primary));
     }
 
     if (_history.isEmpty) {
-      return const Align(
+      return Align(
         alignment: Alignment.topLeft,
         child: Text(
           "No recent searches",
-          style: TextStyle(fontSize: 14, color: Colors.black54),
+          style: TextStyle(fontSize: 14, color: c.mutedText),
         ),
       );
     }
@@ -466,9 +473,13 @@ class _SearchScreenState extends State<SearchScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               "Recent Search",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
             ),
             GestureDetector(
               onTap: _clearAllHistory,
@@ -477,7 +488,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: primaryColor,
+                  color: cs.primary,
                 ),
               ),
             ),
@@ -496,28 +507,24 @@ class _SearchScreenState extends State<SearchScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.history,
-                        size: 20,
-                        color: Colors.black87,
-                      ),
+                      Icon(Icons.history, size: 20, color: cs.onSurface),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           item.query,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 15),
+                          style: TextStyle(fontSize: 15, color: cs.onSurface),
                         ),
                       ),
                       GestureDetector(
                         onTap: () => _removeHistoryItem(item),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Icon(
                             Icons.close,
                             size: 18,
-                            color: Colors.black87,
+                            color: cs.onSurface,
                           ),
                         ),
                       ),

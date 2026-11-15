@@ -1,4 +1,6 @@
 import "package:flutter/material.dart";
+import "package:kisekae/core/notifications/theme/app_theme.dart";
+import "package:kisekae/core/notifications/theme/theme_controller.dart";
 import "package:kisekae/screens/addresses.dart";
 import "package:kisekae/screens/combos_screen.dart";
 import "package:kisekae/screens/myorders_screen.dart";
@@ -24,6 +26,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isSeller = false;
   bool _upgrading = false;
 
+  void _showSnack(String message, {required bool success}) {
+    if (!mounted) return;
+    final bg = success ? context.appColors.success : context.cs.error;
+    final fg = ThemeData.estimateBrightnessForColor(bg) == Brightness.dark
+        ? Colors.white
+        : Colors.black;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(color: fg)),
+        backgroundColor: bg,
+      ),
+    );
+  }
+
   Future<void> _logout() async {
     if (_isLoggingOut) return;
     setState(() => _isLoggingOut = true);
@@ -38,12 +55,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
       if (response.message.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
-          ),
-        );
+        _showSnack(response.message, success: response.success);
       }
     } finally {
       if (mounted) setState(() => _isLoggingOut = false);
@@ -61,17 +73,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Become a seller?"),
-        content: const Text(
+        backgroundColor: ctx.appColors.card,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          "Become a seller?",
+          style: TextStyle(color: ctx.cs.onSurface),
+        ),
+        content: Text(
           "Your account will be upgraded so you can create or join a store. "
           "You can still shop as a buyer at any time.",
+          style: TextStyle(color: ctx.cs.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Cancel"),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: ctx.appColors.mutedText),
+            ),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: ctx.cs.primary,
+              foregroundColor: ctx.cs.onPrimary,
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text("Continue"),
           ),
@@ -86,9 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _upgrading = false);
 
     if (!result.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message), backgroundColor: Colors.red),
-      );
+      _showSnack(result.message, success: false);
       return;
     }
 
@@ -106,6 +129,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -117,15 +142,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: cs.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: cs.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "Profile",
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(fontWeight: FontWeight.w600, color: cs.onSurface),
         ),
       ),
       body: SingleChildScrollView(
@@ -198,11 +227,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
             const SizedBox(height: 32),
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 "Profile Settings",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: cs.onSurface,
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -236,6 +269,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: _upgrading ? null : _openSellerSide,
             ),
             const SizedBox(height: 16),
+            themeChip(),
+            const SizedBox(height: 16),
             actionChip(
               Icons.description_outlined,
               "Terms & conditions",
@@ -259,12 +294,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Widget themeChip() {
+    final cs = context.cs;
+    final c = context.appColors;
+
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance,
+      builder: (context, mode, _) {
+        final isDark = mode == ThemeMode.dark;
+
+        return GestureDetector(
+          onTap: ThemeController.instance.toggle,
+          child: SizedBox(
+            width: double.infinity,
+            child: Container(
+              height: 56,
+              padding: const EdgeInsets.only(left: 16, right: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                color: c.card,
+                border: Border.all(color: cs.outline),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isDark
+                        ? Icons.dark_mode_outlined
+                        : Icons.light_mode_outlined,
+                    size: 24,
+                    color: cs.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Dark mode",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: cs.primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  Switch(
+                    value: isDark,
+                    onChanged: ThemeController.instance.setDark,
+                    thumbColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.selected)
+                          ? cs.onPrimary
+                          : cs.outline,
+                    ),
+                    trackColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.selected)
+                          ? cs.primary
+                          : cs.surfaceContainerHighest,
+                    ),
+                    trackOutlineColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.selected)
+                          ? Colors.transparent
+                          : cs.outline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget iconChip(
     IconData icon,
     String label, {
     double iconSize = 18,
     VoidCallback? onTap,
   }) {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -272,12 +382,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
-          color: const Color(0xFFFFF9F2),
-          border: Border.all(color: const Color(0xFFB78876)),
+          color: c.card,
+          border: Border.all(color: cs.outline),
         ),
         child: Row(
           children: [
-            Icon(icon, size: iconSize, color: const Color(0xFF8B2E3E)),
+            Icon(icon, size: iconSize, color: cs.primary),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -285,8 +395,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF8B2E3E),
+                style: TextStyle(
+                  color: cs.primary,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -305,6 +415,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     VoidCallback? onTap,
     bool isLoading = false,
   }) {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -314,13 +427,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: const Color(0xFFFFF9F2),
-            border: Border.all(color: const Color(0xFFB78876)),
+            color: c.card,
+            border: Border.all(color: cs.outline),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, size: iconSize, color: const Color(0xFF8B2E3E)),
+              Icon(icon, size: iconSize, color: cs.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -328,28 +441,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFF8B2E3E),
+                  style: TextStyle(
+                    color: cs.primary,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               if (isLoading)
-                const SizedBox(
+                SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    color: Color(0xFF8B2E3E),
+                    color: cs.primary,
                   ),
                 )
               else
-                Icon(
-                  Icons.arrow_forward,
-                  size: iconSize,
-                  color: const Color(0xFF8B2E3E),
-                ),
+                Icon(Icons.arrow_forward, size: iconSize, color: cs.primary),
             ],
           ),
         ),

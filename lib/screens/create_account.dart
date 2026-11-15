@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/auth_response.dart';
-import 'package:kisekae/screens/home_screen.dart';
-import 'package:kisekae/screens/seller_gate_screen.dart';
 import 'package:kisekae/screens/verify_code.dart';
 import 'package:kisekae/services/email_auth.dart';
 import 'package:kisekae/services/oauth.dart';
@@ -51,10 +50,15 @@ class _CreateAccountState extends State<CreateAccount> {
           if (!mounted) return;
 
           if (response.message.isNotEmpty) {
+            final isDark =
+                Theme.of(context).colorScheme.brightness == Brightness.dark;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(response.message),
-                backgroundColor: Colors.green,
+                content: Text(
+                  response.message,
+                  style: TextStyle(color: isDark ? Colors.black : Colors.white),
+                ),
+                backgroundColor: context.appColors.success,
               ),
             );
           }
@@ -72,20 +76,22 @@ class _CreateAccountState extends State<CreateAccount> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => VerifyCodeScreen(
-                email: email,
-                isSeller: widget.isSeller,
-              ),
+              builder: (_) =>
+                  VerifyCodeScreen(email: email, isSeller: widget.isSeller),
             ),
           );
           return;
         }
 
         if (response.message.isNotEmpty) {
+          final scheme = Theme.of(context).colorScheme;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response.message),
-              backgroundColor: Colors.red,
+              content: Text(
+                response.message,
+                style: TextStyle(color: scheme.onError),
+              ),
+              backgroundColor: scheme.error,
             ),
           );
         }
@@ -94,68 +100,6 @@ class _CreateAccountState extends State<CreateAccount> {
       }
     }
   }
-
-  /*Future<void> _googleAuth() async {
-    if (_loading || _isOauthLoading) return;
-    setState(() => _isOauthLoading = true);
-    try {
-      final response = await SocialAuth().signInWithGoogle(
-        isSeller: widget.isSeller,
-      );
-      if (!mounted) return;
-      if (response.success) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                widget.isSeller ? const SellerGateScreen() : const HomeScreen(),
-          ),
-          (route) => false,
-        );
-      }
-      if (response.message.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isOauthLoading = false);
-    }
-  }
-
-  Future<void> _githubAuth() async {
-    if (_loading || _isOauthLoading) return;
-    setState(() => _isOauthLoading = true);
-    try {
-      final response = await SocialAuth().signInWithGitHub(
-        isSeller: widget.isSeller,
-      );
-      if (!mounted) return;
-      if (response.success) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                widget.isSeller ? const SellerGateScreen() : const HomeScreen(),
-          ),
-          (route) => false,
-        );
-      }
-      if (response.message.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isOauthLoading = false);
-    }
-  }*/
 
   Future<void> _oauth(
     Future<AuthResponse> Function({required bool isSeller}) signIn,
@@ -172,10 +116,14 @@ class _CreateAccountState extends State<CreateAccount> {
       }
 
       if (response.message.isNotEmpty) {
+        final scheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
-            backgroundColor: Colors.red,
+            content: Text(
+              response.message,
+              style: TextStyle(color: scheme.onError),
+            ),
+            backgroundColor: scheme.error,
           ),
         );
       }
@@ -198,22 +146,27 @@ class _CreateAccountState extends State<CreateAccount> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final colors = Theme.of(context).colorScheme;
     return Theme(
       data: Theme.of(context).copyWith(
         textTheme: Theme.of(context).textTheme.apply(fontFamily: 'sans-serif'),
       ),
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFFEEE9E4),
+          backgroundColor: colors.surface,
           leading: IconButton(
             icon: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.transparent,
-                border: Border.all(color: Colors.black, width: 2),
+                border: Border.all(color: colors.onSurface, width: 2),
               ),
-              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+              child: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 18,
+                color: colors.onSurface,
+              ),
             ),
             onPressed: () => Navigator.pop(context),
             padding: EdgeInsets.zero,
@@ -224,7 +177,7 @@ class _CreateAccountState extends State<CreateAccount> {
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
-        backgroundColor: const Color(0xFFEEE9E4),
+        backgroundColor: colors.surface,
         body: SafeArea(
           child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(
@@ -306,7 +259,7 @@ class _CreateAccountState extends State<CreateAccount> {
                         _obscurePassword
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: Colors.black,
+                        color: colors.onSurface,
                         size: 20,
                       ),
                       onPressed: () {
@@ -348,7 +301,7 @@ class _CreateAccountState extends State<CreateAccount> {
                         _obscureConfirmPassword
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: Colors.black,
+                        color: colors.onSurface,
                         size: 20,
                       ),
                       onPressed: () {
@@ -374,8 +327,8 @@ class _CreateAccountState extends State<CreateAccount> {
                         ? null
                         : _submitForm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B2E3E),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       minimumSize: Size(double.infinity, size.height * 0.06),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -383,12 +336,12 @@ class _CreateAccountState extends State<CreateAccount> {
                       elevation: 0,
                     ),
                     child: _loading
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: Colors.white,
+                              color: colors.onPrimary,
                             ),
                           )
                         : Text(
@@ -403,8 +356,8 @@ class _CreateAccountState extends State<CreateAccount> {
 
                   Row(
                     children: [
-                      const Expanded(
-                        child: Divider(color: Colors.black, thickness: 0.8),
+                      Expanded(
+                        child: Divider(color: colors.onSurface, thickness: 0.8),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -412,12 +365,12 @@ class _CreateAccountState extends State<CreateAccount> {
                           'or signup with',
                           style: TextStyle(
                             fontSize: size.width * 0.037,
-                            color: Colors.black,
+                            color: colors.onSurface,
                           ),
                         ),
                       ),
-                      const Expanded(
-                        child: Divider(color: Colors.black, thickness: 0.8),
+                      Expanded(
+                        child: Divider(color: colors.onSurface, thickness: 0.8),
                       ),
                     ],
                   ),
@@ -429,6 +382,7 @@ class _CreateAccountState extends State<CreateAccount> {
                         onTap: (_loading) ? null : _googleAuth,
                         child: CircleAvatar(
                           radius: 32,
+                          // kept white on purpose: brand logos need a light backdrop
                           backgroundColor: Colors.white,
                           child: Padding(
                             padding: const EdgeInsets.all(8),
@@ -469,9 +423,10 @@ class _CreateAccountState extends State<CreateAccount> {
     Widget? suffixIcon,
     TextInputType? keyboardType,
   }) {
+    final colors = Theme.of(context).colorScheme;
     final simpleBlackBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Colors.black, width: 1),
+      borderSide: BorderSide(color: colors.onSurface, width: 1),
     );
     final size = MediaQuery.of(context).size;
     return Column(
@@ -506,7 +461,7 @@ class _CreateAccountState extends State<CreateAccount> {
               vertical: size.height * 0.015,
             ),
             filled: true,
-            fillColor: const Color(0xFFEEE0E2),
+            fillColor: colors.surfaceContainerHighest,
             border: simpleBlackBorder,
             enabledBorder: simpleBlackBorder,
             focusedBorder: simpleBlackBorder,

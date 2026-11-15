@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/advertising.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/dashboard_model.dart';
@@ -27,7 +28,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   int _currentIndex = 0;
   final HandleProduct _productService = HandleProduct();
 
-  static const Color _widgetBgColor = Color(0xFFFFF9F2);
+  Color get _widgetBgColor => context.appColors.card;
 
   final Analytics _analytics = Analytics();
   final CancelToken _cancelToken = CancelToken();
@@ -152,9 +153,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         toolbarHeight: 50,
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.black,
+            color: colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () {
@@ -169,12 +170,12 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         ),
         title: Align(
           alignment: Alignment.centerLeft,
-          child: const Text(
+          child: Text(
             "KISEKAE",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF7D2938),
+              color: colorScheme.primary,
               fontFamily: 'serif',
             ),
           ),
@@ -569,7 +570,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     ),
                     Text(
                       "Create campaigns to reach more buyer",
-                      style: TextStyle(fontSize: 12, color: Color(0xFF575655)),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

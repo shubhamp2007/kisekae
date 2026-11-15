@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import "package:kisekae/core/notifications/theme/app_theme.dart";
 import "package:kisekae/screens/products_list.dart";
 import "package:kisekae/screens/subcategories/kids.dart";
 import "package:kisekae/screens/subcategories/mens.dart";
@@ -8,8 +9,6 @@ import "package:kisekae/widgets/searchbar.dart";
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
-
-  static const _cardColor = Color(0xFFFFF8F0);
 
   static const _categories = <(String, String, Alignment)>[
     ("Women's Fashion", "assets/images/category1.png", Alignment(0, -0.5)),
@@ -22,6 +21,7 @@ class CategoriesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -33,9 +33,13 @@ class CategoriesScreen extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
@@ -112,6 +116,9 @@ class CategoriesScreen extends StatelessWidget {
     VoidCallback onTap, {
     required bool imageOnLeft,
   }) {
+    final cardColor = context.appColors.card;
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
+
     final image = SizedBox(
       width: 110,
       height: double.infinity,
@@ -119,7 +126,8 @@ class CategoriesScreen extends StatelessWidget {
         imageUrl,
         fit: BoxFit.cover,
         alignment: alignment,
-        color: _cardColor,
+        // light: same card-colored tint as before; dark: no tint
+        color: isDark ? null : cardColor,
         colorBlendMode: BlendMode.multiply,
       ),
     );
@@ -130,7 +138,7 @@ class CategoriesScreen extends StatelessWidget {
         height: 96,
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: _cardColor,
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
             BoxShadow(

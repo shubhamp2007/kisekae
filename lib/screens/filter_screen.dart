@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 
 class ProductFilters {
   final String? size;
@@ -56,6 +57,8 @@ class _FilterScreenState extends State<FilterScreen> {
     _SortOption('Price-high to low', '-price'),
   ];
 
+  // These are product-color swatches (data, not UI chrome), so they stay the
+  // same in both themes on purpose: "Black" must look black, "White" cream, etc.
   static const List<_ColorOption> _colors = [
     _ColorOption('Pink', Color(0xFFE91EDB)),
     _ColorOption('Maroon', Color(0xFF8B2E3E)),
@@ -116,11 +119,11 @@ class _FilterScreenState extends State<FilterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
+    final cs = context.cs;
+    final c = context.appColors;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -140,22 +143,22 @@ class _FilterScreenState extends State<FilterScreen> {
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.black, width: 2),
+                            border: Border.all(color: cs.onSurface, width: 2),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.arrow_back_ios_new,
                             size: 16,
-                            color: Colors.black,
+                            color: cs.onSurface,
                           ),
                         ),
                       ),
                     ),
-                    const Text(
+                    Text(
                       "Filter",
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                   ],
@@ -233,7 +236,7 @@ class _FilterScreenState extends State<FilterScreen> {
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: isSelected
-                                    ? primaryColor
+                                    ? cs.primary
                                     : Colors.transparent,
                                 width: 2,
                               ),
@@ -242,7 +245,9 @@ class _FilterScreenState extends State<FilterScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: option.color,
-                                border: Border.all(color: Colors.black12),
+                                // Thin outline so the Black swatch stays
+                                // visible on the dark background.
+                                border: Border.all(color: c.border),
                               ),
                             ),
                           ),
@@ -253,24 +258,25 @@ class _FilterScreenState extends State<FilterScreen> {
                     const SizedBox(height: 24),
                     _sectionTitle("Price Range"),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       "Selected Price range",
-                      style: TextStyle(fontSize: 13, color: Colors.black87),
+                      style: TextStyle(fontSize: 13, color: cs.onSurface),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       "₹${_priceRange.start.round()}  to  ₹${_priceRange.end.round()}",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
                       ),
                     ),
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
-                        activeTrackColor: Colors.black,
-                        inactiveTrackColor: Colors.black26,
-                        thumbColor: Colors.black,
-                        overlayColor: Colors.black12,
+                        activeTrackColor: cs.onSurface,
+                        inactiveTrackColor: cs.onSurface.withAlpha(66),
+                        thumbColor: cs.onSurface,
+                        overlayColor: cs.onSurface.withAlpha(31),
                         trackHeight: 2,
                       ),
                       child: RangeSlider(
@@ -298,9 +304,9 @@ class _FilterScreenState extends State<FilterScreen> {
                       child: OutlinedButton(
                         onPressed: _reset,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: primaryColor,
-                          backgroundColor: const Color(0xFFFBF8F5),
-                          side: const BorderSide(color: primaryColor),
+                          foregroundColor: cs.primary,
+                          backgroundColor: c.card,
+                          side: BorderSide(color: cs.primary),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -322,7 +328,8 @@ class _FilterScreenState extends State<FilterScreen> {
                       child: FilledButton(
                         onPressed: _apply,
                         style: FilledButton.styleFrom(
-                          backgroundColor: primaryColor,
+                          backgroundColor: cs.primary,
+                          foregroundColor: cs.onPrimary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -348,7 +355,11 @@ class _FilterScreenState extends State<FilterScreen> {
 
   Widget _sectionTitle(String title) => Text(
     title,
-    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    style: TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.bold,
+      color: context.cs.onSurface,
+    ),
   );
 
   Widget _chip({
@@ -357,7 +368,9 @@ class _FilterScreenState extends State<FilterScreen> {
     required VoidCallback onTap,
     double minWidth = 0,
   }) {
-    const primaryColor = Color(0xFF8B2E3E);
+    final cs = context.cs;
+    final c = context.appColors;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -365,18 +378,18 @@ class _FilterScreenState extends State<FilterScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFD3A4AC) : const Color(0xFFFBF8F5),
+          color: isSelected
+              ? Color.alphaBlend(cs.primary.withAlpha(89), c.card)
+              : c.card,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? primaryColor : const Color(0xFFD3C7B8),
-          ),
+          border: Border.all(color: isSelected ? cs.primary : c.border),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: isSelected ? primaryColor : Colors.black87,
+            color: isSelected ? cs.primary : cs.onSurface,
           ),
         ),
       ),

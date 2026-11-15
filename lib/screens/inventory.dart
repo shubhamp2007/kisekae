@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/seller_product.dart';
 import 'package:kisekae/screens/sellerproductdetail.dart';
@@ -70,12 +70,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Map<String, dynamic> _getStatusDisplay(Product product) {
+    final colors = Theme.of(context).colorScheme;
     if (product.totalStock <= 0) {
-      return {'text': 'Out of stock', 'color': const Color(0xFFE53935)};
+      return {'text': 'Out of stock', 'color': colors.error};
     } else if (product.totalStock < _lowStockLimit) {
-      return {'text': 'Low stock', 'color': const Color(0xFFFF8A65)};
+      return {'text': 'Low stock', 'color': context.appColors.warning};
     } else {
-      return {'text': 'In stock', 'color': const Color(0xFF4CAF50)};
+      return {'text': 'In stock', 'color': context.appColors.success};
     }
   }
 
@@ -94,7 +95,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Widget _productCard(Product product) {
-    const cardBackgroundColor = Color(0xFFFFF8F0);
+    final colors = Theme.of(context).colorScheme;
+    final cardBackgroundColor = context.appColors.card;
     final statusDisplay = _getStatusDisplay(product);
 
     return GestureDetector(
@@ -105,7 +107,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         decoration: BoxDecoration(
           color: cardBackgroundColor,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE5DDD2)),
+          border: Border.all(color: colors.outlineVariant),
         ),
         child: Row(
           children: [
@@ -120,18 +122,18 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       errorBuilder: (_, __, ___) => Container(
                         width: 80,
                         height: 80,
-                        color: const Color(0xFFE5DDD2),
-                        child: const Icon(
+                        color: colors.outlineVariant,
+                        child: Icon(
                           Icons.image_not_supported,
-                          color: Colors.grey,
+                          color: colors.outline,
                         ),
                       ),
                     )
                   : Container(
                       width: 80,
                       height: 80,
-                      color: const Color(0xFFE5DDD2),
-                      child: const Icon(Icons.checkroom, color: Colors.grey),
+                      color: colors.outlineVariant,
+                      child: Icon(Icons.checkroom, color: colors.outline),
                     ),
             ),
             const SizedBox(width: 16),
@@ -143,10 +145,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     (product.sku?.trim().isNotEmpty ?? false)
                         ? "Product no. - ${product.sku}"
                         : "Product no. - ${product.id}",
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -156,7 +158,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     "Stock - ${product.totalStock}",
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.black.withOpacity(0.7),
+                      color: colors.onSurface.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -167,7 +169,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         "Status - ",
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.black.withOpacity(0.7),
+                          color: colors.onSurface.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -184,7 +186,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.black.withOpacity(0.4)),
+            Icon(
+              Icons.chevron_right,
+              color: colors.onSurface.withValues(alpha: 0.4),
+            ),
           ],
         ),
       ),
@@ -193,8 +198,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
+    final colors = Theme.of(context).colorScheme;
+    final backgroundColor = colors.surface;
+    final primaryColor = colors.primary;
 
     final products = _visibleProducts();
 
@@ -205,17 +211,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.black,
+            color: colors.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Inventory",
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -252,7 +258,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white : Colors.black87,
+                              color: isSelected
+                                  ? colors.onPrimary
+                                  : colors.onSurface,
                             ),
                           ),
                         ),
@@ -266,16 +274,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: primaryColor),
-                  )
+                ? Center(child: CircularProgressIndicator(color: primaryColor))
                 : products.isEmpty
                 ? Center(
                     child: Text(
                       "No products found",
                       style: TextStyle(
                         fontSize: 15,
-                        color: Colors.black.withOpacity(0.5),
+                        color: colors.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                   )
