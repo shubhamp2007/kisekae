@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/services/order_seller.dart';
 
 import '../models/order_details.dart';
@@ -88,20 +89,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           _isUpdatingStatus = false;
         });
 
+        final isDark =
+            Theme.of(context).colorScheme.brightness == Brightness.dark;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Order status updated to $newStatus successfully!"),
-            backgroundColor: const Color(0xFF2E7D32),
+            content: Text(
+              "Order status updated to $newStatus successfully!",
+              style: TextStyle(color: isDark ? Colors.black : Colors.white),
+            ),
+            backgroundColor: context.appColors.success,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isUpdatingStatus = false);
+        final scheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update status: ${e.toString()}'),
-            backgroundColor: Colors.red.shade700,
+            content: Text(
+              'Failed to update status: ${e.toString()}',
+              style: TextStyle(color: scheme.onError),
+            ),
+            backgroundColor: scheme.error,
           ),
         );
       }
@@ -124,53 +134,61 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Map<String, dynamic> _getStatusStyle(String status) {
+    final cs = Theme.of(context).colorScheme;
+    final app = context.appColors;
+    final isDark = cs.brightness == Brightness.dark;
+
+    late final Color color;
+    late final String label;
+    late final IconData icon;
+
     switch (status.toUpperCase()) {
       case 'DELIVERED':
-        return {
-          'label': 'DELIVERED',
-          'color': const Color(0xFF2E7D32),
-          'bgColor': const Color(0xE8E8F5E9),
-          'icon': Icons.check_circle_outline,
-        };
+        color = app.success;
+        label = 'DELIVERED';
+        icon = Icons.check_circle_outline;
+        break;
       case 'SHIPPED':
-        return {
-          'label': 'SHIPPED',
-          'color': const Color(0xFF0288D1),
-          'bgColor': const Color(0xFFE1F5FE),
-          'icon': Icons.local_shipping_outlined,
-        };
+        color = isDark ? const Color(0xFF4FC3F7) : const Color(0xFF0288D1);
+        label = 'SHIPPED';
+        icon = Icons.local_shipping_outlined;
+        break;
       case 'OUT_FOR_DELIVERY':
-        return {
-          'label': 'OUT FOR DELIVERY',
-          'color': const Color(0xFFE65100),
-          'bgColor': const Color(0xFFFFE0B2),
-          'icon': Icons.delivery_dining_outlined,
-        };
+        color = isDark ? const Color(0xFFFF8A65) : const Color(0xFFE65100);
+        label = 'OUT FOR DELIVERY';
+        icon = Icons.delivery_dining_outlined;
+        break;
       case 'CANCELLED':
-        return {
-          'label': 'CANCELLED',
-          'color': const Color(0xFFC62828),
-          'bgColor': const Color(0xFFFFEBEE),
-          'icon': Icons.cancel_outlined,
-        };
+        color = cs.error;
+        label = 'CANCELLED';
+        icon = Icons.cancel_outlined;
+        break;
       case 'PENDING':
       default:
-        return {
-          'label': 'PENDING',
-          'color': const Color(0xFFF57F17),
-          'bgColor': const Color(0xFFFFFDE7),
-          'icon': Icons.schedule_outlined,
-        };
+        color = app.warning;
+        label = 'PENDING';
+        icon = Icons.schedule_outlined;
     }
+
+    return {
+      'label': label,
+      'color': color,
+      'bgColor': color.withValues(alpha: 0.15),
+      'icon': icon,
+    };
   }
 
   void _showUpdateStatusSheet(BuildContext context) {
-    const validStatuses = ['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'];
+    const validStatuses = [
+      'SHIPPED',
+      'OUT_FOR_DELIVERY',
+      'DELIVERED',
+      'CANCELLED',
+    ];
     String currentStatus = _order?.status.toUpperCase() ?? '';
     String selectedStatus = validStatuses.contains(currentStatus)
         ? currentStatus
         : 'SHIPPED';
-
 
     final notesController = TextEditingController(text: _order?.notes ?? '');
     final trackingNumberController = TextEditingController(
@@ -180,12 +198,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       text: _order?.trackingUrl ?? '',
     );
 
-    const primaryColor = Color(0xFF8B2E3E);
+    final colors = Theme.of(context).colorScheme;
+    final primaryColor = colors.primary;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFFFFF8F0),
+      backgroundColor: context.appColors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -207,12 +226,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           "Update Order Status",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: colors.onSurface,
                           ),
                         ),
                         IconButton(
@@ -229,7 +248,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       children: [
                         _statusChip(
                           label: "OUT FOR DELIVERY",
-                          color: const Color(0xFFE65100),
+                          color:
+                              _getStatusStyle('OUT_FOR_DELIVERY')['color']
+                                  as Color,
                           isSelected: selectedStatus == "OUT_FOR_DELIVERY",
                           onTap: () => setSheetState(
                             () => selectedStatus = "OUT_FOR_DELIVERY",
@@ -237,21 +258,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         ),
                         _statusChip(
                           label: "SHIPPED",
-                          color: const Color(0xFF0288D1),
+                          color: _getStatusStyle('SHIPPED')['color'] as Color,
                           isSelected: selectedStatus == "SHIPPED",
                           onTap: () =>
                               setSheetState(() => selectedStatus = "SHIPPED"),
                         ),
                         _statusChip(
                           label: "DELIVERED",
-                          color: const Color(0xFF2E7D32),
+                          color: _getStatusStyle('DELIVERED')['color'] as Color,
                           isSelected: selectedStatus == "DELIVERED",
                           onTap: () =>
                               setSheetState(() => selectedStatus = "DELIVERED"),
                         ),
                         _statusChip(
                           label: "CANCELLED",
-                          color: const Color(0xFFC62828),
+                          color: _getStatusStyle('CANCELLED')['color'] as Color,
                           isSelected: selectedStatus == "CANCELLED",
                           onTap: () =>
                               setSheetState(() => selectedStatus = "CANCELLED"),
@@ -296,6 +317,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       child: FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: primaryColor,
+                          foregroundColor: colors.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -336,18 +358,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
+    final onColor = isDark ? Colors.black : Colors.white;
+
     return ChoiceChip(
       label: Text(
         label,
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.bold,
-          color: isSelected ? Colors.white : color,
+          color: isSelected ? onColor : color,
         ),
       ),
       selected: isSelected,
       selectedColor: color,
-      backgroundColor: color.withOpacity(0.12),
+      backgroundColor: color.withValues(alpha: 0.12),
       onSelected: (_) => onTap(),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -357,12 +382,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   InputDecoration _inputDecoration(String hint) {
+    final colors = Theme.of(context).colorScheme;
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+      hintStyle: TextStyle(fontSize: 12, color: context.appColors.mutedText),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       filled: true,
-      fillColor: const Color(0xFFE5DDD2),
+      fillColor: colors.surfaceContainerHighest,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
@@ -372,12 +398,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
-    const cardBackgroundColor = Color(0xFFFFF8F0);
+    final colors = Theme.of(context).colorScheme;
+    final backgroundColor = colors.surface;
+    final primaryColor = colors.primary;
+    final cardBackgroundColor = context.appColors.card;
+    final borderColor = colors.outlineVariant;
 
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(child: CircularProgressIndicator(color: primaryColor)),
       );
@@ -390,9 +418,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           backgroundColor: backgroundColor,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new,
-              color: Colors.black,
+              color: colors.onSurface,
               size: 20,
             ),
             onPressed: () => Navigator.pop(context),
@@ -405,7 +433,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               const Text("Order details not available"),
               const SizedBox(height: 12),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: primaryColor),
+                style: FilledButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: colors.onPrimary,
+                ),
                 onPressed: _fetchOrderDetails,
                 child: const Text("Retry"),
               ),
@@ -425,17 +456,17 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.black,
+            color: colors.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Order Details",
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -456,7 +487,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,33 +498,33 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       children: [
                         Expanded(
                           child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Order #${order.orderNumber}",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Order #${order.orderNumber}",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.onSurface,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Placed on ${_formatDate(order.createdAt)}",
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black54,
+                              const SizedBox(height: 4),
+                              Text(
+                                "Placed on ${_formatDate(order.createdAt)}",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: colors.onSurfaceVariant,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
+                        const SizedBox(width: 8),
+                        Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 6,
@@ -524,13 +555,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         ),
                       ],
                     ),
-                    const Divider(height: 24, color: Color(0xFFE5DDD2)),
+                    Divider(height: 24, color: borderColor),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          side: const BorderSide(color: primaryColor),
+                          side: BorderSide(color: primaryColor),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -539,7 +570,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ? null
                             : () => _showUpdateStatusSheet(context),
                         icon: _isUpdatingStatus
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
@@ -547,7 +578,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   color: primaryColor,
                                 ),
                               )
-                            : const Icon(
+                            : Icon(
                                 Icons.edit_road_outlined,
                                 color: primaryColor,
                                 size: 18,
@@ -556,7 +587,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           _isUpdatingStatus
                               ? "Updating Status..."
                               : "Update Order Status",
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: primaryColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -575,20 +606,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Customer & Delivery Info",
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
-                    const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                    Divider(height: 20, color: borderColor),
                     _infoRow(
                       Icons.person_outline,
                       "Customer",
@@ -636,7 +667,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -644,30 +675,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           "Order Items",
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: colors.onSurface,
                           ),
                         ),
                         Text(
                           "${order.items.length} item(s)",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Colors.black54,
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
-                    const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                    Divider(height: 20, color: borderColor),
                     ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: order.items.length,
                       separatorBuilder: (_, __) =>
-                          const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                          Divider(height: 20, color: borderColor),
                       itemBuilder: (context, index) {
                         final item = order.items[index];
                         return Row(
@@ -677,12 +708,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE5DDD2),
+                                color: colors.outlineVariant,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.checkroom,
-                                color: Colors.black54,
+                                color: colors.onSurfaceVariant,
                                 size: 24,
                               ),
                             ),
@@ -693,10 +724,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 children: [
                                   Text(
                                     item.productName,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.black,
+                                      color: colors.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -706,19 +737,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                           item.size!.isNotEmpty) ...[
                                         Text(
                                           "Size: ${item.size}",
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 12,
-                                            color: Colors.black54,
+                                            color: colors.onSurfaceVariant,
                                           ),
                                         ),
                                         const SizedBox(width: 12),
                                       ],
                                       Text(
                                         "Qty: ${item.quantity}",
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.black,
+                                          color: colors.onSurface,
                                         ),
                                       ),
                                     ],
@@ -728,7 +759,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             ),
                             Text(
                               _formatCurrency(item.totalPrice, order.currency),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: primaryColor,
@@ -749,22 +780,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       "Total Order Amount",
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
                     Text(
                       _formatCurrency(order.totalAmount, order.currency),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: primaryColor,
@@ -783,29 +814,30 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Widget _infoRow(IconData icon, String label, String value) {
+    final colors = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: Colors.black54),
+        Icon(icon, size: 18, color: colors.onSurfaceVariant),
         const SizedBox(width: 10),
         SizedBox(
           width: 110,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.black54,
+              color: colors.onSurfaceVariant,
             ),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              color: colors.onSurface,
             ),
           ),
         ),

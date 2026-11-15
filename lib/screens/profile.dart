@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
 import "package:kisekae/core/notifications/theme/app_theme.dart";
-import "package:kisekae/core/notifications/theme/theme_controller.dart";
 import "package:kisekae/screens/addresses.dart";
 import "package:kisekae/screens/combos_screen.dart";
 import "package:kisekae/screens/myorders_screen.dart";
@@ -13,6 +12,7 @@ import "package:kisekae/services/account_service.dart";
 import "package:kisekae/services/email_auth.dart";
 import "package:kisekae/services/post_auth.dart";
 import "package:kisekae/services/storage.dart";
+import "package:kisekae/widgets/theme_toggle.dart";
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -156,6 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           "Profile",
           style: TextStyle(fontWeight: FontWeight.w600, color: cs.onSurface),
         ),
+        actions: const [ThemeToggle(), SizedBox(width: 16)],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -269,8 +270,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onTap: _upgrading ? null : _openSellerSide,
             ),
             const SizedBox(height: 16),
-            themeChip(),
-            const SizedBox(height: 16),
             actionChip(
               Icons.description_outlined,
               "Terms & conditions",
@@ -291,78 +290,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget themeChip() {
-    final cs = context.cs;
-    final c = context.appColors;
-
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: ThemeController.instance,
-      builder: (context, mode, _) {
-        final isDark = mode == ThemeMode.dark;
-
-        return GestureDetector(
-          onTap: ThemeController.instance.toggle,
-          child: SizedBox(
-            width: double.infinity,
-            child: Container(
-              height: 56,
-              padding: const EdgeInsets.only(left: 16, right: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: c.card,
-                border: Border.all(color: cs.outline),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isDark
-                        ? Icons.dark_mode_outlined
-                        : Icons.light_mode_outlined,
-                    size: 24,
-                    color: cs.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Dark mode",
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: cs.primary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Switch(
-                    value: isDark,
-                    onChanged: ThemeController.instance.setDark,
-                    thumbColor: WidgetStateProperty.resolveWith(
-                      (states) => states.contains(WidgetState.selected)
-                          ? cs.onPrimary
-                          : cs.outline,
-                    ),
-                    trackColor: WidgetStateProperty.resolveWith(
-                      (states) => states.contains(WidgetState.selected)
-                          ? cs.primary
-                          : cs.surfaceContainerHighest,
-                    ),
-                    trackOutlineColor: WidgetStateProperty.resolveWith(
-                      (states) => states.contains(WidgetState.selected)
-                          ? Colors.transparent
-                          : cs.outline,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 

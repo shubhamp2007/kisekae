@@ -7,6 +7,7 @@ import 'package:kisekae/screens/team_access.dart';
 import 'package:kisekae/services/dio.dart';
 import 'package:kisekae/services/email_auth.dart';
 import 'package:kisekae/services/post_auth.dart';
+import 'package:kisekae/widgets/theme_toggle.dart';
 
 class ProfileScreen extends StatefulWidget {
   final int storeId;
@@ -26,8 +27,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text('$label is not available yet')));
   }
-
-  void _openTerms() {}
 
   void _openOrders() {
     Navigator.of(context).push(
@@ -243,6 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'Profile',
           style: TextStyle(fontWeight: FontWeight.w700, color: cs.onSurface),
         ),
+        actions: const [ThemeToggle(), SizedBox(width: 16)],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -278,12 +278,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.mail_outline,
                 label: 'Invites',
                 onTap: _openInvites,
-              ),
-              _settingTile(
-                cs,
-                icon: Icons.person,
-                label: 'Business information',
-                onTap: () => _comingSoon('Business information'),
               ),
               _settingTile(
                 cs,
