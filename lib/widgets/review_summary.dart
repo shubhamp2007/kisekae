@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/review_summary.dart';
 import 'package:kisekae/services/review_assistant.dart';
-
-const _primary = Color(0xFF8B2E3E);
-const _surface = Color(0xFFFBF8F5);
-const _line = Color(0xFFD3C7B8);
-const _chip = Color(0xFFE5DDD2);
 
 class ReviewSummarySection extends StatefulWidget {
   final int productId;
@@ -64,7 +60,7 @@ class _ReviewSummarySectionState extends State<ReviewSummarySection> {
           height: 120,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: _chip,
+            color: context.cs.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(16),
           ),
         ),
@@ -118,6 +114,8 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final c = context.appColors;
     final pros = summary.prosList;
     final cons = summary.consList;
     final footer = _footer();
@@ -126,47 +124,52 @@ class _SummaryCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _surface,
+        color: c.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _line),
+        border: Border.all(color: c.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.auto_awesome, size: 18, color: _primary),
-              SizedBox(width: 8),
+              Icon(Icons.auto_awesome, size: 18, color: cs.primary),
+              const SizedBox(width: 8),
               Text(
                 'AI Review Summary',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 10),
           Text(
             summary.summaryText.trim(),
-            style: const TextStyle(fontSize: 14, height: 1.4),
+            style: TextStyle(fontSize: 14, height: 1.4, color: cs.onSurface),
           ),
           if (summary.sizingVerdict.trim().isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: _chip,
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.straighten, size: 16, color: _primary),
+                  Icon(Icons.straighten, size: 16, color: cs.primary),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       'Sizing: ${summary.sizingVerdict.trim()}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
@@ -180,7 +183,7 @@ class _SummaryCard extends StatelessWidget {
               title: 'What customers like',
               points: pros,
               icon: Icons.check_circle_outline,
-              color: const Color(0xFF2E7D32),
+              color: c.success,
             ),
           ],
           if (cons.isNotEmpty) ...[
@@ -189,7 +192,7 @@ class _SummaryCard extends StatelessWidget {
               title: 'What to consider',
               points: cons,
               icon: Icons.error_outline,
-              color: const Color(0xFFC62828),
+              color: cs.error,
             ),
           ],
           if (summary.sentimentDistribution.trim().isNotEmpty) ...[
@@ -198,10 +201,7 @@ class _SummaryCard extends StatelessWidget {
           ],
           if (footer.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text(
-              footer,
-              style: const TextStyle(fontSize: 11, color: Colors.black54),
-            ),
+            Text(footer, style: TextStyle(fontSize: 11, color: c.mutedText)),
           ],
         ],
       ),
@@ -224,12 +224,18 @@ class _PointList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = context.cs.onSurface;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: onSurface,
+          ),
         ),
         const SizedBox(height: 6),
         for (final point in points)
@@ -246,7 +252,11 @@ class _PointList extends StatelessWidget {
                 Expanded(
                   child: Text(
                     point,
-                    style: const TextStyle(fontSize: 13, height: 1.35),
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.35,
+                      color: onSurface,
+                    ),
                   ),
                 ),
               ],
@@ -279,21 +289,23 @@ class _SentimentBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final c = context.appColors;
     final values = _parse();
     final total = values.values.fold<double>(0, (sum, v) => sum + v);
 
     if (values.isEmpty || total <= 0) {
       return Text(
         'Sentiment: ${text.trim()}',
-        style: const TextStyle(fontSize: 12, color: Colors.black87),
+        style: TextStyle(fontSize: 12, color: cs.onSurface),
       );
     }
 
     const order = ['positive', 'neutral', 'negative'];
-    const colors = {
-      'positive': Color(0xFF2E7D32),
-      'neutral': Color(0xFF9E9E9E),
-      'negative': Color(0xFFC62828),
+    final colors = {
+      'positive': c.success,
+      'neutral': c.mutedText,
+      'negative': cs.error,
     };
 
     final shown = order.where((key) => (values[key] ?? 0) > 0).toList();
@@ -301,9 +313,13 @@ class _SentimentBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Customer sentiment',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: cs.onSurface,
+          ),
         ),
         const SizedBox(height: 8),
         ClipRRect(
@@ -338,7 +354,7 @@ class _SentimentBar extends StatelessWidget {
                   const SizedBox(width: 5),
                   Text(
                     '${key[0].toUpperCase()}${key.substring(1)} ${((values[key]! / total) * 100).round()}%',
-                    style: const TextStyle(fontSize: 11),
+                    style: TextStyle(fontSize: 11, color: cs.onSurface),
                   ),
                 ],
               ),

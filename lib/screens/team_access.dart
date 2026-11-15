@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/store_member.dart';
 import 'package:kisekae/screens/seller_gate_screen.dart';
@@ -39,12 +40,21 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
   }
 
   void _showMessage(String text, {bool error = false}) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(text),
-          backgroundColor: error ? Colors.red : Colors.green,
+          content: Text(
+            text,
+            style: TextStyle(
+              color: error
+                  ? scheme.onError
+                  : (isDark ? Colors.black : Colors.white),
+            ),
+          ),
+          backgroundColor: error ? scheme.error : context.appColors.success,
         ),
       );
   }
@@ -99,6 +109,8 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.appColors.card,
+        surfaceTintColor: Colors.transparent,
         title: Text(title),
         content: Text(message),
         actions: [
@@ -282,6 +294,8 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
     final invite = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.appColors.card,
+        surfaceTintColor: Colors.transparent,
         title: const Text('Transfer ownership first'),
         content: const Text(
           'As the owner, you can\'t leave until another member takes over. You don\'t have any managers yet. Invite someone, and once they join you can transfer ownership and leave.',
@@ -310,6 +324,8 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
         final cs = Theme.of(ctx).colorScheme;
         return StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
+            backgroundColor: ctx.appColors.card,
+            surfaceTintColor: Colors.transparent,
             title: const Text('Choose the new owner'),
             content: SizedBox(
               width: double.maxFinite,
@@ -408,7 +424,10 @@ class _TeamAccessScreenState extends State<TeamAccessScreen> {
         child: Text(
           'No team members found',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15, color: cs.onSurface.withOpacity(0.7)),
+          style: TextStyle(
+            fontSize: 15,
+            color: cs.onSurface.withValues(alpha: 0.7),
+          ),
         ),
       );
     }
@@ -584,15 +603,26 @@ class _MemberCard extends StatelessWidget {
     Color(0xFF5E35B1),
   ];
 
+  // Lighter versions so the avatars stay visible on dark cards.
+  static const _paletteDark = [
+    Color(0xFF2E9E57),
+    Color(0xFF4A63C9),
+    Color(0xFFC4566A),
+    Color(0xFF00A58F),
+    Color(0xFF8B6BD9),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final avatarColor = _palette[member.id.abs() % _palette.length];
+    final isDark = cs.brightness == Brightness.dark;
+    final palette = isDark ? _paletteDark : _palette;
+    final avatarColor = palette[member.id.abs() % palette.length];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF6EF),
+        color: context.appColors.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -641,7 +671,7 @@ class _MemberCard extends StatelessWidget {
                   member.roleLabel,
                   style: TextStyle(
                     fontSize: 13,
-                    color: cs.onSurface.withOpacity(0.65),
+                    color: cs.onSurface.withValues(alpha: 0.65),
                   ),
                 ),
               ],
@@ -659,13 +689,15 @@ class _MemberCard extends StatelessWidget {
           else if (showActions)
             PopupMenuButton<String>(
               enabled: !disabled,
+              color: context.appColors.card,
+              surfaceTintColor: Colors.transparent,
               icon: Icon(Icons.more_vert, color: cs.primary),
               onSelected: (value) {
                 if (value == 'transfer') onTransfer();
                 if (value == 'remove') onRemove();
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(
+              itemBuilder: (_) => [
+                const PopupMenuItem(
                   value: 'transfer',
                   child: Text('Transfer ownership'),
                 ),
@@ -673,7 +705,7 @@ class _MemberCard extends StatelessWidget {
                   value: 'remove',
                   child: Text(
                     'Remove from store',
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(color: cs.error),
                   ),
                 ),
               ],
@@ -686,10 +718,6 @@ class _MemberCard extends StatelessWidget {
 
 class _TeamIllustration extends StatelessWidget {
   const _TeamIllustration();
-
-  static const _left = Color(0xFF6B1F2E);
-  static const _center = Color(0xFF7D2938);
-  static const _right = Color(0xFF3E1219);
 
   Widget _head(double size, Color color) {
     return Container(
@@ -717,17 +745,23 @@ class _TeamIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
+
+    final left = isDark ? const Color(0xFF9E3F52) : const Color(0xFF6B1F2E);
+    final center = isDark ? const Color(0xFFC4566A) : const Color(0xFF7D2938);
+    final right = isDark ? const Color(0xFF7F3342) : const Color(0xFF3E1219);
+
     return SizedBox(
       width: 150,
       height: 112,
       child: Stack(
         children: [
-          Positioned(left: 4, top: 22, child: _head(32, _left)),
-          Positioned(right: 4, top: 22, child: _head(32, _right)),
-          Positioned(left: 0, bottom: 4, child: _body(58, 58, _left, 28)),
-          Positioned(right: 0, bottom: 4, child: _body(58, 58, _right, 28)),
-          Positioned(left: 56, top: 0, child: _head(38, _center)),
-          Positioned(left: 48, bottom: 0, child: _body(54, 62, _center, 22)),
+          Positioned(left: 4, top: 22, child: _head(32, left)),
+          Positioned(right: 4, top: 22, child: _head(32, right)),
+          Positioned(left: 0, bottom: 4, child: _body(58, 58, left, 28)),
+          Positioned(right: 0, bottom: 4, child: _body(58, 58, right, 28)),
+          Positioned(left: 56, top: 0, child: _head(38, center)),
+          Positioned(left: 48, bottom: 0, child: _body(54, 62, center, 22)),
         ],
       ),
     );

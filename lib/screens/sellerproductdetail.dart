@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/seller_product.dart';
 import 'package:kisekae/screens/edit_product.dart';
 import 'package:kisekae/screens/productgallery.dart';
@@ -26,6 +27,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     final urls = widget.imageUrls;
     return Column(
       children: [
@@ -38,11 +40,11 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                 width: double.infinity,
                 child: urls.isEmpty
                     ? Container(
-                        color: const Color(0xFFE5DDD2),
-                        child: const Icon(
+                        color: colors.outlineVariant,
+                        child: Icon(
                           Icons.checkroom,
                           size: 48,
-                          color: Colors.grey,
+                          color: colors.outline,
                         ),
                       )
                     : PageView.builder(
@@ -53,23 +55,24 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                           urls[index],
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            color: const Color(0xFFE5DDD2),
-                            child: const Icon(
+                            color: colors.outlineVariant,
+                            child: Icon(
                               Icons.image_not_supported,
                               size: 48,
-                              color: Colors.grey,
+                              color: colors.outline,
                             ),
                           ),
                         ),
                       ),
               ),
             ),
+            // Overlay badges stay dark with white text on purpose: they sit on the photo.
             if (widget.onEdit != null)
               Positioned(
                 top: 10,
                 right: 10,
                 child: Material(
-                  color: Colors.black.withOpacity(0.65),
+                  color: Colors.black.withValues(alpha: 0.65),
                   borderRadius: BorderRadius.circular(20),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(20),
@@ -112,7 +115,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -140,8 +143,8 @@ class _ImageCarouselState extends State<_ImageCarousel> {
                 height: 7,
                 decoration: BoxDecoration(
                   color: _currentPage == i
-                      ? const Color(0xFF8B2E3E)
-                      : const Color(0xFFE5DDD2),
+                      ? colors.primary
+                      : colors.outlineVariant,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -211,10 +214,12 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
   Future<void> _handleDeleteProduct() async {
     if (_product == null) return;
 
+    final colors = Theme.of(context).colorScheme;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFFF8F0),
+        backgroundColor: context.appColors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           "Delete Product?",
@@ -226,17 +231,17 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
+            child: Text(
               "CANCEL",
-              style: TextStyle(color: Colors.black54),
+              style: TextStyle(color: colors.onSurfaceVariant),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               "DELETE",
               style: TextStyle(
-                color: Color(0xFFE53935),
+                color: colors.error,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -257,9 +262,12 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Product deleted successfully."),
-            backgroundColor: Colors.black87,
+          SnackBar(
+            content: Text(
+              "Product deleted successfully.",
+              style: TextStyle(color: colors.onInverseSurface),
+            ),
+            backgroundColor: colors.inverseSurface,
           ),
         );
         Navigator.pop(context, true);
@@ -269,8 +277,11 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
         setState(() => _isDeleting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to delete product: ${e.toString()}'),
-            backgroundColor: Colors.red.shade700,
+            content: Text(
+              'Failed to delete product: ${e.toString()}',
+              style: TextStyle(color: colors.onError),
+            ),
+            backgroundColor: colors.error,
           ),
         );
       }
@@ -289,6 +300,8 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
       return;
     }
 
+    final colors = Theme.of(context).colorScheme;
+
     ProductVariant? selectedVariant = targetVariant;
     if (selectedVariant == null) {
       if (variants.length == 1) {
@@ -296,7 +309,7 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
       } else {
         selectedVariant = await showModalBottomSheet<ProductVariant>(
           context: context,
-          backgroundColor: const Color(0xFFFFF8F0),
+          backgroundColor: context.appColors.card,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -321,7 +334,7 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                         ),
                       ),
                     ),
-                    const Divider(color: Color(0xFFE5DDD2)),
+                    Divider(color: colors.outlineVariant),
                     Flexible(
                       child: ListView.builder(
                         shrinkWrap: true,
@@ -335,7 +348,11 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: _tryParseHex(v.colorHex) ?? Colors.grey,
-                                border: Border.all(color: Colors.black26),
+                                border: Border.all(
+                                  color: colors.onSurface.withValues(
+                                    alpha: 0.26,
+                                  ),
+                                ),
                               ),
                             ),
                             title: Text(v.colorName),
@@ -390,31 +407,31 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
   }
 
   Map<String, dynamic> _getStatusStyle(String status, int totalStock) {
+    final cs = Theme.of(context).colorScheme;
+    final app = context.appColors;
+
+    late final Color color;
+    late final String label;
+
     if (totalStock == 0 || status.toUpperCase() == 'OUT_OF_STOCK') {
-      return {
-        'label': 'OUT OF STOCK',
-        'color': const Color(0xFFE53935),
-        'bgColor': const Color(0xFFFFEBEE),
-      };
+      color = cs.error;
+      label = 'OUT OF STOCK';
     } else if (totalStock < 50 || status.toUpperCase() == 'LOW_STOCK') {
-      return {
-        'label': 'LOW STOCK',
-        'color': const Color(0xFFE65100),
-        'bgColor': const Color(0xFFFFE0B2),
-      };
+      color = app.warning;
+      label = 'LOW STOCK';
     } else if (status.toUpperCase() == 'ACTIVE') {
-      return {
-        'label': 'ACTIVE',
-        'color': const Color(0xFF2E7D32),
-        'bgColor': const Color(0xE8E8F5E9),
-      };
+      color = app.success;
+      label = 'ACTIVE';
     } else {
-      return {
-        'label': status.toUpperCase(),
-        'color': const Color(0xFF616161),
-        'bgColor': const Color(0xFFEEEEEE),
-      };
+      color = cs.onSurfaceVariant;
+      label = status.toUpperCase();
     }
+
+    return {
+      'label': label,
+      'color': color,
+      'bgColor': color.withValues(alpha: 0.15),
+    };
   }
 
   Color? _tryParseHex(String hex) {
@@ -429,12 +446,14 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
-    const cardBackgroundColor = Color(0xFFFFF8F0);
+    final colors = Theme.of(context).colorScheme;
+    final backgroundColor = colors.surface;
+    final primaryColor = colors.primary;
+    final cardBackgroundColor = context.appColors.card;
+    final borderColor = colors.outlineVariant;
 
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(child: CircularProgressIndicator(color: primaryColor)),
       );
@@ -447,9 +466,9 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
           backgroundColor: backgroundColor,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_ios_new,
-              color: Colors.black,
+              color: colors.onSurface,
               size: 20,
             ),
             onPressed: () => Navigator.pop(context),
@@ -462,7 +481,10 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
               const Text("Product details not available"),
               const SizedBox(height: 12),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: primaryColor),
+                style: FilledButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: colors.onPrimary,
+                ),
                 onPressed: _fetchProductDetails,
                 child: const Text("Retry"),
               ),
@@ -495,28 +517,24 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.black,
+            color: colors.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Product Details",
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(
-              Icons.edit_note,
-              color: Color(0xFF8B2E3E),
-              size: 26,
-            ),
+            icon: Icon(Icons.edit_note, color: colors.primary, size: 26),
             onPressed: () async {
               final updatedProduct = await Navigator.push<Product>(
                 context,
@@ -534,17 +552,17 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
           ),
           IconButton(
             icon: _isDeleting
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Color(0xFFE53935),
+                      color: colors.error,
                     ),
                   )
-                : const Icon(
+                : Icon(
                     Icons.delete_outline_rounded,
-                    color: Color(0xFFE53935),
+                    color: colors.error,
                     size: 24,
                   ),
             onPressed: _isDeleting ? null : _handleDeleteProduct,
@@ -567,7 +585,7 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   children: [
@@ -583,10 +601,10 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                         Expanded(
                           child: Text(
                             product.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                              color: colors.onSurface,
                             ),
                           ),
                         ),
@@ -621,20 +639,20 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Pricing & Stock Overview",
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
-                    const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                    Divider(height: 20, color: borderColor),
                     Row(
                       children: [
                         Expanded(
@@ -679,20 +697,20 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Product Information",
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: colors.onSurface,
                       ),
                     ),
-                    const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                    Divider(height: 20, color: borderColor),
                     _infoRow("SKU", product.sku ?? "N/A"),
                     const SizedBox(height: 10),
                     _infoRow("Store Name", product.storeName),
@@ -716,20 +734,20 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                   decoration: BoxDecoration(
                     color: cardBackgroundColor,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE5DDD2)),
+                    border: Border.all(color: borderColor),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         "Variants (${product.variants.length})",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: colors.onSurface,
                         ),
                       ),
-                      const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                      Divider(height: 20, color: borderColor),
                       for (final variant in product.variants) ...[
                         Row(
                           children: [
@@ -741,17 +759,21 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                                 color:
                                     _tryParseHex(variant.colorHex) ??
                                     Colors.grey,
-                                border: Border.all(color: Colors.black26),
+                                border: Border.all(
+                                  color: colors.onSurface.withValues(
+                                    alpha: 0.26,
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 variant.colorName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                                  color: colors.onSurface,
                                 ),
                               ),
                             ),
@@ -760,8 +782,8 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                               style: TextStyle(
                                 fontSize: 12,
                                 color: variant.totalStock < 10
-                                    ? const Color(0xFFE65100)
-                                    : Colors.black54,
+                                    ? context.appColors.warning
+                                    : colors.onSurfaceVariant,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -780,7 +802,7 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                                     vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFEEEEEE),
+                                    color: colors.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -799,17 +821,17 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                           alignment: Alignment.centerLeft,
                           child: OutlinedButton.icon(
                             onPressed: () => _openManagePhotos(variant),
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.photo_library_outlined,
                               size: 16,
-                              color: Color(0xFF8B2E3E),
+                              color: colors.primary,
                             ),
                             label: Text(
                               "Manage Photos"
                               "${variant.images.isNotEmpty ? ' (${variant.images.length})' : ''}",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF8B2E3E),
+                                color: colors.primary,
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
@@ -817,10 +839,7 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                                 horizontal: 12,
                                 vertical: 6,
                               ),
-                              side: const BorderSide(
-                                color: Color(0xFF8B2E3E),
-                                width: 1,
-                              ),
+                              side: BorderSide(color: colors.primary, width: 1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -843,26 +862,26 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                   decoration: BoxDecoration(
                     color: cardBackgroundColor,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE5DDD2)),
+                    border: Border.all(color: borderColor),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Description",
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black,
+                          color: colors.onSurface,
                         ),
                       ),
-                      const Divider(height: 20, color: Color(0xFFE5DDD2)),
+                      Divider(height: 20, color: borderColor),
                       Text(
                         product.description!,
                         style: TextStyle(
                           fontSize: 13,
                           height: 1.4,
-                          color: Colors.black.withOpacity(0.8),
+                          color: colors.onSurface.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
@@ -884,14 +903,15 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
     bool isStrikethrough = false,
     bool isHighlight = false,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: Colors.black54,
+            color: colors.onSurfaceVariant,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -905,10 +925,10 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
                 ? TextDecoration.lineThrough
                 : TextDecoration.none,
             color: isHighlight
-                ? const Color(0xFFE65100)
+                ? context.appColors.warning
                 : isPrimary
-                ? const Color(0xFF8B2E3E)
-                : Colors.black,
+                ? colors.primary
+                : colors.onSurface,
           ),
         ),
       ],
@@ -916,6 +936,7 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
   }
 
   Widget _infoRow(String label, String value) {
+    final colors = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -923,20 +944,20 @@ class _SellerProductDetailScreenState extends State<SellerProductDetailScreen> {
           width: 110,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.black54,
+              color: colors.onSurfaceVariant,
             ),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.black,
+              color: colors.onSurface,
             ),
           ),
         ),

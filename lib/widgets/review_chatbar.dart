@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/review_summary.dart';
 import 'package:kisekae/services/review_assistant.dart';
-
-const _primary = Color(0xFF8B2E3E);
-const _surface = Color(0xFFFBF8F5);
-const _line = Color(0xFFD3C7B8);
-const _pageBg = Color(0xFFEFE8DF);
-const _muted = Color(0xFFE5DDD2);
 
 class ReviewChatBar extends StatefulWidget {
   final int productId;
@@ -38,7 +33,7 @@ class _ReviewChatBarState extends State<ReviewChatBar> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: _pageBg,
+      backgroundColor: context.cs.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -47,40 +42,39 @@ class _ReviewChatBarState extends State<ReviewChatBar> {
   }
 
   Widget _pill() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return GestureDetector(
       onTap: _openChat,
       child: Container(
         height: 48,
         padding: const EdgeInsets.only(left: 14, right: 8),
         decoration: BoxDecoration(
-          color: _surface,
+          color: c.card,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _line),
+          border: Border.all(color: c.border),
         ),
         child: Row(
           children: [
-            const Icon(Icons.auto_awesome, size: 20, color: _primary),
+            Icon(Icons.auto_awesome, size: 20, color: cs.primary),
             const SizedBox(width: 10),
-            const Expanded(
+            Expanded(
               child: Text(
                 "Ask about this product's reviews",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 14, color: Colors.black54),
+                style: TextStyle(fontSize: 14, color: c.mutedText),
               ),
             ),
             Container(
               width: 32,
               height: 32,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _primary,
+                color: cs.primary,
               ),
-              child: const Icon(
-                Icons.arrow_upward,
-                size: 18,
-                color: Colors.white,
-              ),
+              child: Icon(Icons.arrow_upward, size: 18, color: cs.onPrimary),
             ),
           ],
         ),
@@ -98,7 +92,7 @@ class _ReviewChatBarState extends State<ReviewChatBar> {
     }
 
     return Container(
-      color: _pageBg,
+      color: context.cs.surface,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: SafeArea(top: false, child: _pill()),
     );
@@ -247,6 +241,9 @@ class _ChatSheetState extends State<_ChatSheet> {
   }
 
   Widget _header() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 8, 4),
       child: Column(
@@ -255,16 +252,16 @@ class _ChatSheetState extends State<_ChatSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: _line,
+              color: c.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(Icons.auto_awesome, size: 20, color: _primary),
+              Icon(Icons.auto_awesome, size: 20, color: cs.primary),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -273,18 +270,19 @@ class _ChatSheetState extends State<_ChatSheet> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
                       ),
                     ),
                     Text(
                       'Answers are based on customer reviews only',
-                      style: TextStyle(fontSize: 12, color: Colors.black54),
+                      style: TextStyle(fontSize: 12, color: c.mutedText),
                     ),
                   ],
                 ),
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
+                icon: Icon(Icons.close, color: cs.onSurface),
               ),
             ],
           ),
@@ -294,6 +292,9 @@ class _ChatSheetState extends State<_ChatSheet> {
   }
 
   Widget _emptyState() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -303,13 +304,17 @@ class _ChatSheetState extends State<_ChatSheet> {
             Icon(
               Icons.auto_awesome,
               size: 40,
-              color: _primary.withOpacity(0.7),
+              color: cs.primary.withAlpha(179),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               "Ask anything about this product's reviews",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: cs.onSurface,
+              ),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -321,9 +326,9 @@ class _ChatSheetState extends State<_ChatSheet> {
                   ActionChip(
                     label: Text(suggestion),
                     onPressed: () => _send(suggestion),
-                    backgroundColor: _surface,
-                    side: const BorderSide(color: _line),
-                    labelStyle: const TextStyle(fontSize: 13, color: _primary),
+                    backgroundColor: c.card,
+                    side: BorderSide(color: c.border),
+                    labelStyle: TextStyle(fontSize: 13, color: cs.primary),
                   ),
               ],
             ),
@@ -355,11 +360,13 @@ class _ChatSheetState extends State<_ChatSheet> {
       return const SizedBox.shrink();
     }
 
+    final cs = context.cs;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBE3E3),
+        color: cs.error.withAlpha(31),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -367,13 +374,13 @@ class _ChatSheetState extends State<_ChatSheet> {
           Expanded(
             child: Text(
               controller.errorMessage ?? 'Could not get an answer.',
-              style: const TextStyle(fontSize: 12, color: Color(0xFFC62828)),
+              style: TextStyle(fontSize: 12, color: cs.error),
             ),
           ),
           TextButton(
             onPressed: controller.retry,
             style: TextButton.styleFrom(
-              foregroundColor: _primary,
+              foregroundColor: cs.primary,
               minimumSize: const Size(0, 32),
               padding: const EdgeInsets.symmetric(horizontal: 8),
             ),
@@ -385,6 +392,8 @@ class _ChatSheetState extends State<_ChatSheet> {
   }
 
   Widget _inputRow() {
+    final cs = context.cs;
+    final c = context.appColors;
     final sending = widget.controller.sending;
 
     return Padding(
@@ -401,28 +410,31 @@ class _ChatSheetState extends State<_ChatSheet> {
               keyboardType: TextInputType.text,
               textInputAction: TextInputAction.send,
               textCapitalization: TextCapitalization.sentences,
+              style: TextStyle(color: cs.onSurface),
+              cursorColor: cs.primary,
               inputFormatters: [LengthLimitingTextInputFormatter(500)],
               onSubmitted: (_) => _send(),
               decoration: InputDecoration(
                 hintText: 'Ask about fit, quality, comfort…',
+                hintStyle: TextStyle(color: c.mutedText),
                 counterText: '',
                 filled: true,
-                fillColor: _surface,
+                fillColor: c.card,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: _line),
+                  borderSide: BorderSide(color: c.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: _line),
+                  borderSide: BorderSide(color: c.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: _primary, width: 1.5),
+                  borderSide: BorderSide(color: cs.primary, width: 1.5),
                 ),
               ),
             ),
@@ -434,12 +446,13 @@ class _ChatSheetState extends State<_ChatSheet> {
             child: FilledButton(
               onPressed: sending ? null : _send,
               style: FilledButton.styleFrom(
-                backgroundColor: _primary,
-                disabledBackgroundColor: _primary.withOpacity(0.4),
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
+                disabledBackgroundColor: cs.primary.withAlpha(102),
                 padding: EdgeInsets.zero,
                 shape: const CircleBorder(),
               ),
-              child: const Icon(Icons.arrow_upward, color: Colors.white),
+              child: Icon(Icons.arrow_upward, color: cs.onPrimary),
             ),
           ),
         ],
@@ -460,7 +473,7 @@ class _ChatSheetState extends State<_ChatSheet> {
         child: Column(
           children: [
             _header(),
-            const Divider(height: 1, color: _line),
+            Divider(height: 1, color: context.appColors.border),
             Expanded(
               child: controller.entries.isEmpty && !controller.sending
                   ? _emptyState()
@@ -482,6 +495,8 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final c = context.appColors;
     final maxWidth = MediaQuery.of(context).size.width * 0.8;
 
     if (entry.isUser) {
@@ -490,9 +505,9 @@ class _Bubble extends StatelessWidget {
         child: Container(
           constraints: BoxConstraints(maxWidth: maxWidth),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: const BoxDecoration(
-            color: _primary,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: cs.primary,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(18),
               topRight: Radius.circular(18),
               bottomLeft: Radius.circular(18),
@@ -501,7 +516,7 @@ class _Bubble extends StatelessWidget {
           ),
           child: Text(
             entry.text,
-            style: const TextStyle(fontSize: 14, color: Colors.white),
+            style: TextStyle(fontSize: 14, color: cs.onPrimary),
           ),
         ),
       );
@@ -513,8 +528,8 @@ class _Bubble extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: maxWidth),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: entry.isRefusal ? _muted : _surface,
-          border: Border.all(color: _line),
+          color: entry.isRefusal ? cs.surfaceContainerHighest : c.card,
+          border: Border.all(color: c.border),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(18),
             topRight: Radius.circular(18),
@@ -527,13 +542,9 @@ class _Bubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (entry.isRefusal) ...[
-              const Padding(
-                padding: EdgeInsets.only(top: 2),
-                child: Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: Colors.black54,
-                ),
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(Icons.info_outline, size: 16, color: c.mutedText),
               ),
               const SizedBox(width: 8),
             ],
@@ -543,7 +554,7 @@ class _Bubble extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.35,
-                  color: entry.isRefusal ? Colors.black54 : Colors.black87,
+                  color: entry.isRefusal ? c.mutedText : cs.onSurface,
                 ),
               ),
             ),
@@ -559,27 +570,33 @@ class _TypingBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: _surface,
-          border: Border.all(color: _line),
+          color: c.card,
+          border: Border.all(color: c.border),
           borderRadius: BorderRadius.circular(18),
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
               width: 14,
               height: 14,
-              child: CircularProgressIndicator(strokeWidth: 2, color: _primary),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: cs.primary,
+              ),
             ),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
               'Reading the reviews…',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
+              style: TextStyle(fontSize: 13, color: c.mutedText),
             ),
           ],
         ),
