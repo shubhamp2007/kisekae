@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/cart.dart';
+import 'package:kisekae/screens/addresses.dart';
 import 'package:kisekae/screens/checkout.dart';
 import 'package:kisekae/screens/product_screen.dart';
 import 'package:kisekae/services/cart_service.dart';
@@ -382,15 +383,33 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.place_rounded, color: cs.onSurface),
-                          const SizedBox(width: 4),
-                          Text(
-                            "Address-Home (saved address)",
-                            style: TextStyle(color: cs.onSurface),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AddressesScreen(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 4,
+                            horizontal: 2,
                           ),
-                        ],
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.place_rounded, color: cs.onSurface),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Address-Home (saved address)",
+                                style: TextStyle(color: cs.onSurface),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       SizedBox(
