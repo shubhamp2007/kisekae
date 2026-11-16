@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/product_detail.dart';
+import 'package:kisekae/models/recommend_products.dart';
 
 import 'package:kisekae/services/dio.dart';
 import 'package:kisekae/services/helper.dart';
@@ -51,6 +52,34 @@ class Product extends BaseRepository {
       final data = Map<String, dynamic>.from(body['data'] as Map);
 
       return PaginatedProducts.fromJson(data);
+    });
+  }
+
+  Future<RecommendedProducts> getRecommendedProducts({
+    String? category,
+    bool? excludeCart,
+    int page = 1,
+    int pageSize = 20,
+    CancelToken? cancelToken,
+  }) async {
+    return execute(() async {
+      final queryParams = <String, dynamic>{
+        if (category != null && category.isNotEmpty) 'category': category,
+        if (excludeCart != null) 'exclude_cart': excludeCart,
+        'page': page,
+        'page_size': pageSize,
+      };
+
+      final response = await _dio.get(
+        '/products/recommended/',
+        queryParameters: queryParams,
+        cancelToken: cancelToken,
+      );
+
+      final body = Map<String, dynamic>.from(response.data as Map);
+      final data = Map<String, dynamic>.from(body['data'] as Map);
+
+      return RecommendedProducts.fromJson(data);
     });
   }
 

@@ -153,11 +153,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         toolbarHeight: 50,
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: colorScheme.onSurface,
-            size: 20,
-          ),
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -167,6 +162,19 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               (route) => false,
             );
           },
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+              border: Border.all(color: colorScheme.onSurface, width: 2),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colorScheme.onSurface,
+            ),
+          ),
         ),
         title: Align(
           alignment: Alignment.centerLeft,

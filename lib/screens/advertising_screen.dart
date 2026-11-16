@@ -659,15 +659,34 @@ class _CampaignCard extends StatelessWidget {
                 p.isActive ? 'Running' : 'Paused',
                 style: TextStyle(fontSize: 12, color: statusColor),
               ),
-              PopupMenuButton<String>(
-                enabled: !busy,
-                icon: const Icon(Icons.more_vert, size: 20),
-                padding: EdgeInsets.zero,
-                onSelected: (_) => onRemove(),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'remove', child: Text('Remove')),
-                ],
-              ),
+              if (busy)
+                const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              else
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, size: 20),
+                  padding: EdgeInsets.zero,
+                  onSelected: (value) {
+                    if (value == 'toggle') onToggle(!p.isActive);
+                    if (value == 'remove') onRemove();
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'toggle',
+                      child: Text(p.isActive ? 'Pause' : 'Run'),
+                    ),
+                    const PopupMenuItem(value: 'remove', child: Text('Remove')),
+                  ],
+                ),
             ],
           ),
           Row(
@@ -705,21 +724,6 @@ class _CampaignCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (busy)
-                const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              else
-                Switch(
-                  value: p.isActive,
-                  onChanged: onToggle,
-                  activeThumbColor: cs.primary,
-                ),
             ],
           ),
         ],

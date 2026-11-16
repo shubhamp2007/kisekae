@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/userprofile.dart';
 import 'package:kisekae/screens/onboarding_screen.dart';
@@ -437,14 +438,41 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
       ),
       child: _isEditingName
           ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.person_outline, size: 22, color: cs.primary),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.person_outline,
+                    size: 22,
+                    color: cs.primary,
+                  ),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: TextField(
+                  child: TextFormField(
                     controller: _nameController,
                     autofocus: true,
+                    maxLength: 150,
+                    maxLengthEnforcement: MaxLengthEnforcement.enforced,
                     enabled: !_isSavingName,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your full name';
+                      }
+                      if (value.trim().length < 2) {
+                        return 'Name must be at least 2 characters long';
+                      }
+                      if (value.length >= 150) {
+                        return 'You have reached the maximum limit';
+                      }
+                      final nameRegex = RegExp(r'^[A-Za-z\s\.\ -]{2,150}$');
+                      if (!nameRegex.hasMatch(value)) {
+                        return 'Enter a valid name';
+                      }
+                      return null;
+                    },
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -454,6 +482,9 @@ class _PersonalInformationScreenState extends State<PersonalInformationScreen> {
                       isDense: true,
                       border: InputBorder.none,
                       hintText: "Enter full name",
+                      counterText: '',
+                      errorMaxLines: 2,
+                      errorStyle: TextStyle(height: 1.2),
                     ),
                   ),
                 ),

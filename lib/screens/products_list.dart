@@ -4,6 +4,7 @@ import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/product_detail.dart';
 import 'package:kisekae/screens/filter_screen.dart';
 import 'package:kisekae/screens/product_screen.dart';
+import 'package:kisekae/screens/search.dart';
 import 'package:kisekae/services/buyer_product.dart';
 
 import 'package:kisekae/services/wishlist_service.dart';
@@ -25,9 +26,10 @@ class FilterChipData {
 }
 
 class ProductListScreen extends StatefulWidget {
+  final ProductFilters? initialFilters;
   final String? initialQuery;
 
-  const ProductListScreen({super.key, this.initialQuery});
+  const ProductListScreen({super.key, this.initialQuery, this.initialFilters});
 
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
@@ -66,6 +68,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   @override
   void initState() {
     super.initState();
+    _filters = widget.initialFilters ?? const ProductFilters();
     final initialQuery = widget.initialQuery?.trim() ?? '';
     if (initialQuery.isNotEmpty) {
       _searchQuery = initialQuery;
@@ -92,6 +95,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
     if (_products.isNotEmpty && currentScroll >= (maxScroll - 250)) {
       _loadMoreProducts();
     }
+  }
+
+  void _openSearch() {
+    FocusScope.of(context).unfocus();
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const SearchScreen()));
   }
 
   Future<void> _loadWishlist() async {
@@ -258,63 +267,70 @@ class _ProductListScreenState extends State<ProductListScreen> {
           ),
         ),
         titleSpacing: 0,
-        title: Container(
-          height: 46,
-          margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: context.appColors.card,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: context.appColors.border),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.search, color: colors.onSurface, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  textInputAction: TextInputAction.search,
-                  style: TextStyle(color: colors.onSurface),
-                  cursorColor: colors.primary,
-                  onSubmitted: (value) {
-                    FocusScope.of(context).unfocus();
-                    _searchQuery = value.trim();
-                    _fetchProducts();
-                  },
-                  decoration: InputDecoration(
-                    hintText: "EXPLORE YOUR STYLE",
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
+        title: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _openSearch,
+          child: Container(
+            height: 46,
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: context.appColors.card,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: context.appColors.border),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search, color: colors.onSurface, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    textInputAction: TextInputAction.search,
+                    readOnly: true,
+                    showCursor: false,
+                    onTap: _openSearch,
+                    style: TextStyle(color: colors.onSurface),
+                    cursorColor: colors.primary,
+                    onSubmitted: (value) {
+                      FocusScope.of(context).unfocus();
+                      _searchQuery = value.trim();
+                      _fetchProducts();
+                    },
+                    decoration: InputDecoration(
+                      hintText: "EXPLORE YOUR STYLE",
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      focusedErrorBorder: InputBorder.none,
+                      isDense: true,
                     ),
-                    filled: false,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    disabledBorder: InputBorder.none,
-                    errorBorder: InputBorder.none,
-                    focusedErrorBorder: InputBorder.none,
-                    isDense: true,
                   ),
                 ),
-              ),
-              if (_searchController.text.isNotEmpty)
-                GestureDetector(
-                  onTap: () {
-                    FocusScope.of(context).unfocus();
-                    _searchController.clear();
-                    _searchQuery = '';
-                    _fetchProducts();
-                  },
-                  child: Icon(
-                    Icons.clear,
-                    color: colors.onSurfaceVariant,
-                    size: 18,
+                if (_searchController.text.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+                      _searchController.clear();
+                      _searchQuery = '';
+                      _fetchProducts();
+                    },
+                    child: Icon(
+                      Icons.clear,
+                      color: colors.onSurfaceVariant,
+                      size: 18,
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
