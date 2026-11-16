@@ -116,6 +116,14 @@ class OrderStatusHistory {
       createdAt: json['created_at'] as String? ?? '',
     );
   }
+
+  factory OrderStatusHistory.fromEvent(Map<String, dynamic> json, int index) {
+    return OrderStatusHistory(
+      id: index,
+      toStatus: json['event'] as String? ?? json['status'] as String? ?? '',
+      createdAt: json['timestamp'] as String? ?? '',
+    );
+  }
 }
 
 class OrderDetail {
@@ -257,7 +265,24 @@ class OrderTrackingDetail {
 
   factory OrderTrackingDetail.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] as List<dynamic>? ?? [];
+    final rawEvents = json['events'] as List<dynamic>? ?? [];
     final rawHistory = json['status_history'] as List<dynamic>? ?? [];
+
+    final history = rawEvents.isNotEmpty
+        ? [
+            for (var i = 0; i < rawEvents.length; i++)
+              OrderStatusHistory.fromEvent(
+                Map<String, dynamic>.from(rawEvents[i] as Map),
+                i,
+              ),
+          ]
+        : rawHistory
+              .map(
+                (e) => OrderStatusHistory.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
+              .toList();
 
     return OrderTrackingDetail(
       id: json['id'] as int? ?? 0,
@@ -274,13 +299,7 @@ class OrderTrackingDetail {
       items: rawItems
           .map((e) => OrderItem.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList(),
-      statusHistory: rawHistory
-          .map(
-            (e) => OrderStatusHistory.fromJson(
-              Map<String, dynamic>.from(e as Map),
-            ),
-          )
-          .toList(),
+      statusHistory: history,
     );
   }
 
