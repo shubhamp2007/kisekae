@@ -373,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Best Deals',
+                        'Recommended for you',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,

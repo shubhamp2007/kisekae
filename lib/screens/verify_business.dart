@@ -126,9 +126,6 @@ class _VerifyBusinessScreenState extends State<VerifyBusinessScreen> {
         return;
 
       default:
-        debugPrint(
-          'VERIFY STATUS (treated as not submitted): $data',
-        ); // temporary
         setState(() {
           _isChecking = false;
           _isSubmitted = false;
@@ -173,7 +170,6 @@ class _VerifyBusinessScreenState extends State<VerifyBusinessScreen> {
       if (!mounted) return;
       _showMessage(e.message);
     } catch (e, st) {
-      debugPrint('REFRESH ERROR: $e\n$st');
       if (!mounted) return;
       _showMessage('Something went wrong. Please try again');
     } finally {

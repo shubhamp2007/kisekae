@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/seller_product.dart';
 import 'package:kisekae/services/seller_product.dart';
 
@@ -169,24 +170,31 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFFF8F0),
+        backgroundColor: ctx.appColors.card,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(content),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: ctx.cs.onSurface,
+          ),
+        ),
+        content: Text(content, style: TextStyle(color: ctx.cs.onSurface)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
+            child: Text(
               "CANCEL",
-              style: TextStyle(color: Colors.black54),
+              style: TextStyle(color: ctx.appColors.mutedText),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               "DELETE",
               style: TextStyle(
-                color: Color(0xFFE53935),
+                color: ctx.cs.error,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -198,30 +206,37 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
-    const cardBackgroundColor = Color(0xFFFFF8F0);
+    final cs = context.cs;
+    final c = context.appColors;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: backgroundColor,
+        backgroundColor: cs.surface,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
-            size: 20,
-          ),
           onPressed: () => Navigator.pop(context, true),
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+              border: Border.all(color: cs.onSurface, width: 2),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: cs.onSurface,
+            ),
+          ),
         ),
         title: Text(
           widget.variantName.isNotEmpty
               ? "Photos – ${widget.variantName}"
               : "Variant Photos",
-          style: const TextStyle(
-            color: Colors.black,
+          style: TextStyle(
+            color: cs.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -238,37 +253,32 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Variant Images",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: cs.onSurface,
                       ),
                     ),
                     Text(
                       "${_images.length} of 10 uploaded",
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
+                      style: TextStyle(fontSize: 12, color: c.mutedText),
                     ),
                   ],
                 ),
                 if (_images.length < 10)
                   TextButton.icon(
-                    onPressed: _isUploadingImages
-                        ? null
-                        : _pickAndUploadImages,
-                    icon: const Icon(
+                    onPressed: _isUploadingImages ? null : _pickAndUploadImages,
+                    icon: Icon(
                       Icons.add_photo_alternate_outlined,
-                      color: primaryColor,
+                      color: cs.primary,
                       size: 20,
                     ),
-                    label: const Text(
+                    label: Text(
                       "Add Photos",
                       style: TextStyle(
-                        color: primaryColor,
+                        color: cs.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -279,23 +289,23 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
             const SizedBox(height: 12),
 
             _isLoadingImages
-                ? const Center(
+                ? Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(color: primaryColor),
+                      padding: const EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(color: cs.primary),
                     ),
                   )
                 : Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: cardBackgroundColor,
+                      color: c.card,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5DDD2)),
+                      border: Border.all(color: c.border),
                     ),
                     child: Column(
                       children: [
                         if (_isUploadingImages) ...[
-                          const LinearProgressIndicator(color: primaryColor),
+                          LinearProgressIndicator(color: cs.primary),
                           const SizedBox(height: 12),
                         ],
                         GridView.builder(
@@ -309,8 +319,7 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
                                 childAspectRatio: 1.0,
                               ),
                           itemCount:
-                              _images.length +
-                              (_images.length < 10 ? 1 : 0),
+                              _images.length + (_images.length < 10 ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index == _images.length) {
                               return GestureDetector(
@@ -319,26 +328,26 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
                                     : _pickAndUploadImages,
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFE5DDD2),
+                                    color: cs.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: primaryColor.withOpacity(0.5),
+                                      color: cs.primary.withAlpha(128),
                                     ),
                                   ),
-                                  child: const Column(
+                                  child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Icon(
                                         Icons.add_rounded,
-                                        color: primaryColor,
+                                        color: cs.primary,
                                         size: 28,
                                       ),
-                                      SizedBox(height: 4),
+                                      const SizedBox(height: 4),
                                       Text(
                                         "Add More",
                                         style: TextStyle(
                                           fontSize: 11,
-                                          color: primaryColor,
+                                          color: cs.primary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -349,7 +358,9 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
                             }
 
                             final image = _images[index];
-                            final isDeleting = _deletingImageIds.contains(image.id);
+                            final isDeleting = _deletingImageIds.contains(
+                              image.id,
+                            );
 
                             return Stack(
                               children: [
@@ -360,10 +371,10 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
                                       image.imageUrl,
                                       fit: BoxFit.cover,
                                       errorBuilder: (_, __, ___) => Container(
-                                        color: const Color(0xFFE5DDD2),
-                                        child: const Icon(
+                                        color: cs.surfaceContainerHighest,
+                                        child: Icon(
                                           Icons.broken_image,
-                                          color: Colors.grey,
+                                          color: c.mutedText,
                                         ),
                                       ),
                                     ),
@@ -378,22 +389,22 @@ class _ProductGalleryScreenState extends State<ProductGalleryScreen> {
                                         : () => _deleteImage(image.id),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.black54,
+                                      decoration: BoxDecoration(
+                                        color: cs.scrim.withAlpha(140),
                                         shape: BoxShape.circle,
                                       ),
                                       child: isDeleting
-                                          ? const SizedBox(
+                                          ? SizedBox(
                                               width: 14,
                                               height: 14,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2,
-                                                color: Colors.white,
+                                                color: cs.onPrimary,
                                               ),
                                             )
-                                          : const Icon(
+                                          : Icon(
                                               Icons.close_rounded,
-                                              color: Colors.white,
+                                              color: cs.onPrimary,
                                               size: 16,
                                             ),
                                     ),

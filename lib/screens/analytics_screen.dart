@@ -114,22 +114,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         backgroundColor: backgroundColor,
         elevation: 0,
         centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Container(
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(
-                color: colors.onSurface.withValues(alpha: 0.12),
-              ),
+              color: Colors.transparent,
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: IconButton(
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: colors.onSurface,
-                size: 16,
-              ),
-              onPressed: () => Navigator.pop(context),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
             ),
           ),
         ),
