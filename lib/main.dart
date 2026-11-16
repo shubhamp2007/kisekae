@@ -13,7 +13,6 @@ import 'package:kisekae/screens/tryon_history.dart';
 import 'package:kisekae/core/notifications/background_handler.dart';
 import 'package:kisekae/core/notifications/notification_service.dart';
 import 'package:kisekae/screens/seller_gate_screen.dart';
-import 'package:kisekae/screens/pose_screen.dart';
 
 import 'package:kisekae/services/profile_details.dart';
 import 'package:kisekae/services/dio.dart';
@@ -99,7 +98,6 @@ class _MyAppState extends State<MyApp> {
         '/login': (context) => const GettingStartedScreen(),
         '/home': (context) => const HomeScreen(),
         '/season-sale': (context) => const SeasonSaleScreen(),
-        '/pose': (context) => const PoseDetectionScreen(),
       },
       onGenerateRoute: _generateRoute,
       home: _startScreen(),
@@ -130,6 +128,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Widget _startScreen() {
-    return const PoseDetectionScreen();
+    if (!widget.isLoggedIn) return OnboardingScreen(onThemeChanged: _setDark);
+
+    return widget.openSeller ? const SellerGateScreen() : const HomeScreen();
   }
 }
