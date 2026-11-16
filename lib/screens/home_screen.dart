@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:kisekae/core/notifications/notification_service.dart';
+import 'package:kisekae/models/buyer_seasonal_sale.dart';
 import 'package:kisekae/screens/addresses.dart';
 import 'package:kisekae/screens/categories.dart';
 import 'package:kisekae/screens/products_list.dart';
@@ -10,6 +11,7 @@ import 'package:kisekae/screens/subcategories/kids.dart';
 import 'package:kisekae/screens/subcategories/mens.dart';
 import 'package:kisekae/screens/subcategories/womens.dart';
 import 'package:kisekae/screens/wishlist_screen.dart';
+import 'package:kisekae/services/buyer_seasonal_service.dart';
 import 'package:kisekae/services/dio.dart';
 import 'package:kisekae/widgets/best_deals.dart';
 import 'package:kisekae/widgets/bottom_bar.dart';
@@ -24,6 +26,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _subscription;
+  final SeasonalSales _seasonalSalesRepo = SeasonalSales();
+  final PageController _bannerPageController = PageController();
+
+  List<SeasonalSale> _ongoingSales = [];
+  int _currentBannerIndex = 0;
 
   final List<String> brandImages = [
     'assets/images/brands/deals1.png',
@@ -34,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadOngoingSales();
     _subscription = NotificationService().onTap.listen(_handleDeepLink);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final pending = NotificationService().consumePendingDeepLink();
@@ -41,9 +49,23 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _loadOngoingSales() async {
+    try {
+      final sales = await _seasonalSalesRepo.getSales();
+      if (!mounted) return;
+      final liveSales = sales.where((s) => s.isLive).toList();
+      setState(() {
+        _ongoingSales = liveSales.isNotEmpty ? liveSales : sales;
+      });
+    } catch (e) {
+      debugPrint('Failed to load ongoing seasonal sales: $e');
+    }
+  }
+
   @override
   void dispose() {
     _subscription?.cancel();
+    _bannerPageController.dispose();
     super.dispose();
   }
 
@@ -92,9 +114,119 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openSeasonSale() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const SeasonSaleScreen()));
+  void _openSeasonSale(SeasonalSale? sale) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => sale != null
+            ? SeasonSaleScreen(
+                seasonalSale: sale,
+                title: sale.title,
+                subtitle: sale.description,
+              )
+            : const SeasonSaleScreen(),
+      ),
+    );
+  }
+
+  Widget _buildSaleBannerCarousel(ColorScheme colors) {
+    if (_ongoingSales.isEmpty) {
+      return GestureDetector(
+        onTap: () => _openSeasonSale(null),
+        child: Container(
+          width: double.infinity,
+          height: 250,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: colors.outlineVariant, width: 1),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.asset('assets/images/banner.png', fit: BoxFit.cover),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 250,
+          child: PageView.builder(
+            controller: _bannerPageController,
+            itemCount: _ongoingSales.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentBannerIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final sale = _ongoingSales[index];
+              final discountNum = double.tryParse(sale.discountPercentage) ?? 0;
+              final discountText = discountNum == discountNum.roundToDouble()
+                  ? '${discountNum.toInt()}% OFF'
+                  : '$discountNum% OFF';
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: _ongoingSales.length > 1 ? 6.0 : 0,
+                ),
+                child: GestureDetector(
+                  onTap: () => _openSeasonSale(sale),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: colors.outlineVariant,
+                        width: 1,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          sale.bannerImage.isNotEmpty
+                              ? Image.network(
+                                  sale.bannerImage,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Image.asset(
+                                    'assets/images/banner.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Image.asset(
+                                  'assets/images/banner.png',
+                                  fit: BoxFit.cover,
+                                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (_ongoingSales.length > 1) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_ongoingSales.length, (index) {
+              final isSelected = index == _currentBannerIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isSelected ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isSelected ? colors.primary : colors.outlineVariant,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
@@ -171,27 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: _openSeasonSale,
-                    child: Container(
-                      width: 370,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: colors.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.asset(
-                          'assets/images/banner.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildSaleBannerCarousel(colors),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

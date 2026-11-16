@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/advertising.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/seasonal_sale_seller.dart';
-import 'package:kisekae/screens/season_sale_screen.dart';
 import 'package:kisekae/services/format.dart';
 import 'package:kisekae/services/seasonal_sale_seller_service.dart';
+
+const int kMaxSaleProducts = 5;
 
 class PromotionDetailScreen extends StatefulWidget {
   final int storeId;
@@ -39,12 +41,21 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
 
   void _snack(String text, {bool error = false}) {
     if (!mounted) return;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(text),
-          backgroundColor: error ? Colors.red : Colors.green,
+          content: Text(
+            text,
+            style: TextStyle(
+              color: error
+                  ? scheme.onError
+                  : (isDark ? Colors.black : Colors.white),
+            ),
+          ),
+          backgroundColor: error ? scheme.error : context.appColors.success,
         ),
       );
   }
@@ -106,6 +117,8 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.appColors.card,
+        surfaceTintColor: Colors.transparent,
         title: const Text('Remove from sale?'),
         content: Text('${p.productName} will no longer be part of this sale.'),
         actions: [
@@ -141,6 +154,12 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
     final sale = _sale;
     if (sale == null || _enrolling) return;
 
+    final remainingSlots = kMaxSaleProducts - sale.enrolledProducts.length;
+    if (remainingSlots <= 0) {
+      _snack('A sale can have at most $kMaxSaleProducts products', error: true);
+      return;
+    }
+
     final ids = await showModalBottomSheet<List<int>>(
       context: context,
       isScrollControlled: true,
@@ -151,6 +170,7 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
       builder: (_) => _ProductPickerSheet(
         loadProducts: widget.loadStoreProducts,
         alreadyEnrolled: sale.enrolledProducts.map((e) => e.productId).toSet(),
+        maxSelectable: remainingSlots,
       ),
     );
     if (ids == null || ids.isEmpty || !mounted) return;
@@ -172,12 +192,12 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
     }
   }
 
-  // ---------- UI ----------
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final sale = _sale;
+    final isFull =
+        sale != null && sale.enrolledProducts.length >= kMaxSaleProducts;
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -200,25 +220,6 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          if (sale != null)
-            IconButton(
-              icon: Icon(Icons.visibility_outlined, color: cs.onSurface),
-              tooltip: 'Preview Sale',
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => SeasonSaleScreen(
-                      seasonalSale: sale,
-                      title: sale.title,
-                      subtitle: sale.subtitle,
-                      bannerImageUrl: sale.bannerImage,
-                    ),
-                  ),
-                );
-              },
-            ),
-        ],
         title: Text(
           'Sale details',
           style: TextStyle(fontWeight: FontWeight.w700, color: cs.onSurface),
@@ -241,7 +242,7 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
                   width: double.infinity,
                   height: 48,
                   child: FilledButton.icon(
-                    onPressed: _enrolling ? null : _addProducts,
+                    onPressed: (_enrolling || isFull) ? null : _addProducts,
                     icon: _enrolling
                         ? SizedBox(
                             width: 18,
@@ -252,7 +253,11 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
                             ),
                           )
                         : const Icon(Icons.add, size: 20),
-                    label: const Text('Add products'),
+                    label: Text(
+                      isFull
+                          ? 'Limit reached ($kMaxSaleProducts/$kMaxSaleProducts)'
+                          : 'Add products',
+                    ),
                     style: FilledButton.styleFrom(
                       backgroundColor: cs.primary,
                       foregroundColor: cs.onPrimary,
@@ -308,7 +313,7 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
         _header(cs, sale),
         const SizedBox(height: 24),
         Text(
-          'Enrolled products',
+          'Enrolled products (${sale.enrolledProducts.length}/$kMaxSaleProducts)',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -336,29 +341,18 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
 
   Widget _header(ColorScheme cs, SeasonalSale sale) {
     final subtle = cs.onSurface.withValues(alpha: 0.75);
+    final app = context.appColors;
 
-    final (badgeBg, badgeFg, badgeText) = switch (sale.phase) {
-      SalePhase.live => (
-        const Color(0xFFE3F2E5),
-        const Color(0xFF2E7D32),
-        'Live',
-      ),
-      SalePhase.upcoming => (
-        const Color(0xFFFBEFD5),
-        const Color(0xFFB7791F),
-        'Upcoming',
-      ),
-      SalePhase.ended => (
-        const Color(0xFFECECEC),
-        const Color(0xFF616161),
-        'Ended',
-      ),
+    final (badgeColor, badgeText) = switch (sale.phase) {
+      SalePhase.live => (app.success, 'Live'),
+      SalePhase.upcoming => (app.warning, 'Upcoming'),
+      SalePhase.ended => (cs.onSurfaceVariant, 'Ended'),
     };
 
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF6EF),
+        color: app.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -403,7 +397,7 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: badgeBg,
+                        color: badgeColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -411,7 +405,7 @@ class _PromotionDetailScreenState extends State<PromotionDetailScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: badgeFg,
+                          color: badgeColor,
                         ),
                       ),
                     ),
@@ -537,9 +531,9 @@ class _ProductTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9F2),
+        color: context.appColors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFB78876)),
+        border: Border.all(color: context.appColors.border),
       ),
       child: Row(
         children: [
@@ -595,10 +589,10 @@ class _ProductTile extends StatelessWidget {
                     const SizedBox(width: 6),
                     Text(
                       '${formatNumber(p.discountPercentage)}% off',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF2E7D32),
+                        color: context.appColors.success,
                       ),
                     ),
                   ],
@@ -656,7 +650,7 @@ class _ProductTile extends StatelessWidget {
   }
 
   Widget _placeholder(ColorScheme cs) => Container(
-    color: const Color(0xFFE0C3C7),
+    color: cs.primary.withValues(alpha: 0.2),
     child: Icon(Icons.checkroom, color: cs.primary),
   );
 }
@@ -665,9 +659,13 @@ class _ProductPickerSheet extends StatefulWidget {
   final Future<List<PromotableProduct>> Function() loadProducts;
   final Set<int> alreadyEnrolled;
 
+  /// How many more products can still be added to this sale.
+  final int maxSelectable;
+
   const _ProductPickerSheet({
     required this.loadProducts,
     required this.alreadyEnrolled,
+    required this.maxSelectable,
   });
 
   @override
@@ -678,6 +676,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   List<PromotableProduct> _products = [];
   final Set<int> _selected = {};
   bool _loading = true;
+  bool _limitHit = false;
   String? _error;
 
   @override
@@ -711,13 +710,14 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final noun = widget.maxSelectable == 1 ? 'product' : 'products';
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.75,
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -726,6 +726,24 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: cs.onSurface,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _limitHit
+                    ? 'Limit reached: a sale can have at most '
+                          '$kMaxSaleProducts products'
+                    : 'Select up to ${widget.maxSelectable} $noun',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: _limitHit
+                      ? cs.error
+                      : cs.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -801,16 +819,23 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
         final p = _products[i];
         final selected = _selected.contains(p.id);
 
-        void toggle() => setState(
-          () => selected ? _selected.remove(p.id) : _selected.add(p.id),
-        );
+        void toggle() => setState(() {
+          if (selected) {
+            _selected.remove(p.id);
+            _limitHit = false;
+          } else if (_selected.length >= widget.maxSelectable) {
+            _limitHit = true;
+          } else {
+            _selected.add(p.id);
+          }
+        });
 
         return Material(
-          color: const Color(0xFFFFF9F2),
+          color: context.appColors.card,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: selected ? cs.primary : const Color(0xFFB78876),
+              color: selected ? cs.primary : context.appColors.border,
               width: selected ? 2 : 1,
             ),
           ),
@@ -844,6 +869,7 @@ class _ProductPickerSheetState extends State<_ProductPickerSheet> {
                   Checkbox(
                     value: selected,
                     activeColor: cs.primary,
+                    checkColor: cs.onPrimary,
                     onChanged: (_) => toggle(),
                   ),
                 ],
