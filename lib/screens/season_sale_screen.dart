@@ -1,14 +1,14 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:kisekae/core/notifications/theme/app_theme.dart';
-import 'package:kisekae/models/product_detail.dart';
-import 'package:kisekae/models/seasonal_sale_seller.dart';
+import 'package:kisekae/models/api_exception.dart';
+import 'package:kisekae/models/buyer_seasonal_sale.dart';
+import 'package:kisekae/models/sale_product.dart';
 import 'package:kisekae/screens/filter_screen.dart';
 import 'package:kisekae/screens/product_screen.dart';
 import 'package:kisekae/screens/wishlist_screen.dart';
-import 'package:kisekae/services/buyer_product.dart';
+import 'package:kisekae/services/buyer_seasonal_service.dart';
 import 'package:kisekae/services/wishlist_service.dart';
 
 class SeasonSaleFilterChipData {
@@ -28,19 +28,19 @@ class SeasonSaleFilterChipData {
 }
 
 class SeasonSaleScreen extends StatefulWidget {
+  final int? saleId;
+  final SeasonalSale? seasonalSale;
   final String? bannerAsset;
-  final String? bannerImageUrl;
   final String? title;
   final String? subtitle;
-  final SeasonalSale? seasonalSale;
 
   const SeasonSaleScreen({
     super.key,
+    this.saleId,
+    this.seasonalSale,
     this.bannerAsset = 'assets/images/banner.png',
-    this.bannerImageUrl,
     this.title = 'SEASON SALE',
     this.subtitle = 'Limited Time Exclusive Deals & Offers',
-    this.seasonalSale,
   });
 
   @override
@@ -48,14 +48,13 @@ class SeasonSaleScreen extends StatefulWidget {
 }
 
 class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
-  final Product _productService = Product();
+  final SeasonalSales _saleService = SeasonalSales();
   final WishlistService _wishlistService = WishlistService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  CancelToken? _searchCancelToken;
-
-  List<ProductDetail> _products = [];
+  SeasonalSale? _sale;
+  List<SaleProduct> _products = [];
   final Set<int> _wishlistedProductIds = {};
 
   bool _isLoading = true;
@@ -63,11 +62,14 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
   bool _hasMore = false;
   int _currentPage = 1;
   int _totalCount = 0;
+  int _requestId = 0;
   String? _errorMessage;
   String _searchQuery = '';
 
   Color get backgroundColor => Theme.of(context).colorScheme.surface;
   Color get primaryColor => Theme.of(context).colorScheme.primary;
+
+  int get _saleId => widget.seasonalSale?.id ?? widget.saleId!;
 
   final List<SeasonSaleFilterChipData> _saleFilters = const [
     SeasonSaleFilterChipData(label: 'All Deals'),
@@ -86,7 +88,9 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
   @override
   void initState() {
     super.initState();
+    _sale = widget.seasonalSale;
     _scrollController.addListener(_onScroll);
+    if (_sale == null) _loadSale();
     _fetchProducts();
     _loadWishlist();
   }
@@ -95,7 +99,6 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-    _searchCancelToken?.cancel('Screen disposed');
     _searchController.dispose();
     super.dispose();
   }
@@ -107,6 +110,14 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
     if (_products.isNotEmpty && currentScroll >= (maxScroll - 250)) {
       _loadMoreProducts();
     }
+  }
+
+  Future<void> _loadSale() async {
+    try {
+      final sale = await _saleService.getSaleDetails(_saleId);
+      if (!mounted) return;
+      setState(() => _sale = sale as SeasonalSale?);
+    } catch (_) {}
   }
 
   Future<void> _loadWishlist() async {
@@ -122,12 +133,26 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
     } catch (_) {}
   }
 
-  Future<void> _fetchProducts() async {
-    _searchCancelToken?.cancel('New search request initiated');
-    _searchCancelToken = CancelToken();
+  Future<SaleProductsResponse> _requestPage(int page) {
+    return _saleService.getSaleProducts(
+      _saleId,
+      category: _selectedFilter?.category,
+      color: _filters.color,
+      inStock: _selectedFilter?.inStock,
+      maxPrice: _selectedFilter?.maxPrice ?? _filters.maxPrice,
+      minPrice: _filters.minPrice,
+      ordering: _selectedFilter?.ordering ?? _filters.ordering,
+      page: page,
+      q: _searchQuery.isNotEmpty ? _searchQuery : null,
+      size: _filters.size,
+    );
+  }
+
+  Future<void> _fetchProducts({bool spinner = true}) async {
+    final id = ++_requestId;
 
     setState(() {
-      _isLoading = true;
+      if (spinner) _isLoading = true;
       _isLoadingMore = false;
       _hasMore = false;
       _currentPage = 1;
@@ -135,21 +160,11 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
     });
 
     try {
-      final response = await _productService.getProducts(
-        search: _searchQuery.isNotEmpty ? _searchQuery : null,
-        ordering: _selectedFilter?.ordering ?? _filters.ordering,
-        category: _selectedFilter?.category,
-        inStock: _selectedFilter?.inStock,
-        size: _filters.size,
-        color: _filters.color,
-        minPrice: _filters.minPrice,
-        maxPrice: _selectedFilter?.maxPrice ?? _filters.maxPrice,
-        page: 1,
-        cancelToken: _searchCancelToken,
-      );
+      final response = await _requestPage(1);
 
-      if (!mounted) return;
+      if (!mounted || id != _requestId) return;
       setState(() {
+        _sale = response.sale;
         _products = response.results;
         _totalCount = response.count;
         _currentPage = 1;
@@ -157,13 +172,12 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      if (e is DioException && e.type == DioExceptionType.cancel) {
-        return;
-      }
-      if (!mounted) return;
+      if (!mounted || id != _requestId) return;
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Failed to load sale products. Please try again.';
+        _errorMessage = e is ApiException
+            ? e.message
+            : 'Failed to load sale products. Please try again.';
       });
     }
   }
@@ -171,26 +185,14 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
   Future<void> _loadMoreProducts() async {
     if (_isLoading || _isLoadingMore || !_hasMore) return;
 
-    setState(() {
-      _isLoadingMore = true;
-    });
+    final id = _requestId;
+    setState(() => _isLoadingMore = true);
 
     try {
       final nextPage = _currentPage + 1;
-      final response = await _productService.getProducts(
-        search: _searchQuery.isNotEmpty ? _searchQuery : null,
-        ordering: _selectedFilter?.ordering ?? _filters.ordering,
-        category: _selectedFilter?.category,
-        inStock: _selectedFilter?.inStock,
-        size: _filters.size,
-        color: _filters.color,
-        minPrice: _filters.minPrice,
-        maxPrice: _selectedFilter?.maxPrice ?? _filters.maxPrice,
-        page: nextPage,
-        cancelToken: _searchCancelToken,
-      );
+      final response = await _requestPage(nextPage);
 
-      if (!mounted) return;
+      if (!mounted || id != _requestId) return;
       setState(() {
         _currentPage = nextPage;
         _products.addAll(response.results);
@@ -198,19 +200,14 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
         _hasMore = response.next != null && response.results.isNotEmpty;
         _isLoadingMore = false;
       });
-    } catch (e) {
-      if (e is DioException && e.type == DioExceptionType.cancel) {
-        return;
-      }
-      if (!mounted) return;
-      setState(() {
-        _isLoadingMore = false;
-      });
+    } catch (_) {
+      if (!mounted || id != _requestId) return;
+      setState(() => _isLoadingMore = false);
     }
   }
 
-  Future<void> _toggleWishlist(ProductDetail product) async {
-    final productId = product.id;
+  Future<void> _toggleWishlist(SaleProduct product) async {
+    final productId = product.productId;
     final isWishlisted = _wishlistedProductIds.contains(productId);
 
     setState(() {
@@ -259,14 +256,56 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
     }
   }
 
+  String _currencySymbol(String currency) =>
+      currency.toUpperCase() == 'INR' ? '₹' : '$currency ';
+
+  String _formatAmount(double value) => value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toStringAsFixed(2);
+
+  String? _timingText(SeasonalSale? sale) {
+    if (sale == null) return null;
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final now = DateTime.now();
+
+    if (now.isBefore(sale.startTime)) {
+      final start = sale.startTime.toLocal();
+      return 'Starts ${start.day} ${months[start.month - 1]}';
+    }
+
+    final remaining = sale.endTime.difference(now);
+    if (remaining.inSeconds <= 0) return 'Sale ended';
+    if (remaining.inDays >= 1) {
+      return 'Ends in ${remaining.inDays}d ${remaining.inHours % 24}h';
+    }
+    if (remaining.inHours >= 1) {
+      return 'Ends in ${remaining.inHours}h ${remaining.inMinutes % 60}m';
+    }
+    return 'Ends in ${remaining.inMinutes < 1 ? 1 : remaining.inMinutes}m';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: _buildAppBar(),
       body: RefreshIndicator(
-        onRefresh: _fetchProducts,
+        onRefresh: () => _fetchProducts(spinner: false),
         color: primaryColor,
+        backgroundColor: context.appColors.card,
         child: CustomScrollView(
           controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
@@ -340,6 +379,7 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
                 textInputAction: TextInputAction.search,
                 style: TextStyle(color: colors.onSurface),
                 cursorColor: colors.primary,
+                onChanged: (_) => setState(() {}),
                 onSubmitted: (value) {
                   FocusScope.of(context).unfocus();
                   _searchQuery = value.trim();
@@ -415,7 +455,7 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
             border: Border.all(color: context.appColors.border),
           ),
           child: IconButton(
-            icon: Icon(Icons.favorite_border, color: primaryColor, size: 20),
+            icon: Icon(Icons.favorite, color: primaryColor, size: 20),
             onPressed: () {
               Navigator.of(
                 context,
@@ -429,15 +469,18 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
 
   Widget _buildBannerSection() {
     final colors = Theme.of(context).colorScheme;
-    final sale = widget.seasonalSale;
-    final hasRemoteBanner =
-        (widget.bannerImageUrl != null && widget.bannerImageUrl!.isNotEmpty) ||
-        (sale?.bannerImage != null && sale!.bannerImage!.isNotEmpty);
-    final remoteUrl = widget.bannerImageUrl ?? sale?.bannerImage;
+    final sale = _sale;
+    final fallbackAsset = widget.bannerAsset ?? 'assets/images/banner.png';
+    final bannerUrl = sale?.bannerImage ?? '';
+    final hasRemoteBanner = bannerUrl.isNotEmpty;
+    final timingText = _timingText(sale);
 
     final bannerTitle = sale != null && sale.title.isNotEmpty
         ? sale.title
         : (widget.title ?? 'SEASON SALE');
+    final bannerSubtitle = sale != null && sale.description.trim().isNotEmpty
+        ? sale.description.trim()
+        : (widget.subtitle ?? 'Exclusive Seasonal Discounts');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -465,22 +508,16 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
                 children: [
                   hasRemoteBanner
                       ? Image.network(
-                          remoteUrl!,
+                          bannerUrl,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
-                            widget.bannerAsset ?? 'assets/images/banner.png',
-                            fit: BoxFit.cover,
-                          ),
+                          errorBuilder: (_, __, ___) =>
+                              Image.asset(fallbackAsset, fit: BoxFit.cover),
                         )
-                      : Image.asset(
-                          widget.bannerAsset ?? 'assets/images/banner.png',
-                          fit: BoxFit.cover,
-                        ),
-                  if (sale?.timingText.isNotEmpty ?? false)
+                      : Image.asset(fallbackAsset, fit: BoxFit.cover),
+                  if (timingText != null)
                     Positioned(
                       bottom: 12,
                       right: 12,
-                      // kept dark with white text on purpose: it sits on the banner image
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -500,7 +537,7 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              sale!.timingText,
+                              timingText,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
@@ -530,8 +567,7 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                sale?.subtitle ??
-                    (widget.subtitle ?? 'Exclusive Seasonal Discounts'),
+                bannerSubtitle,
                 style: TextStyle(
                   fontSize: 13,
                   color: colors.onSurfaceVariant,
@@ -763,7 +799,8 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
               FocusScope.of(context).unfocus();
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => ProductDetailsScreen(productId: product.id),
+                  builder: (_) =>
+                      ProductDetailsScreen(productId: product.productId),
                 ),
               );
             },
@@ -774,31 +811,37 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
     );
   }
 
-  Widget _buildProductCard(ProductDetail product) {
+  Widget _buildProductCard(SaleProduct product) {
     final colors = Theme.of(context).colorScheme;
-    final isWishlisted = _wishlistedProductIds.contains(product.id);
-    final imageUrl = product.imageUrl ?? product.thumbnail ?? '';
+    final isWishlisted = _wishlistedProductIds.contains(product.productId);
+    final imageUrl = product.imageUrl.isNotEmpty
+        ? product.imageUrl
+        : product.thumbnail;
     final hasStore = product.storeName.trim().isNotEmpty;
+    final symbol = _currencySymbol(product.currency);
 
     final priceDouble = double.tryParse(product.price) ?? 0;
-    final compareDouble = product.compareAtPrice != null
-        ? double.tryParse(product.compareAtPrice!)
-        : null;
+    final originalDouble =
+        double.tryParse(product.originalPrice) ??
+        double.tryParse(product.compareAtPrice ?? '');
+    final hasStrike = originalDouble != null && originalDouble > priceDouble;
 
-    int? discountPercent;
-    if (compareDouble != null && compareDouble > priceDouble) {
-      discountPercent = (((compareDouble - priceDouble) / compareDouble) * 100)
-          .round();
+    int? discountPercent = double.tryParse(product.discountPercentage)?.round();
+    if ((discountPercent == null || discountPercent <= 0) && hasStrike) {
+      discountPercent =
+          (((originalDouble - priceDouble) / originalDouble) * 100).round();
     }
+    if (discountPercent != null && discountPercent <= 0) discountPercent = null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        SizedBox(
+          height: 190,
           child: Stack(
+            fit: StackFit.expand,
             children: [
               Container(
-                width: double.infinity,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: colors.outlineVariant,
@@ -866,7 +909,6 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
                   child: Container(
                     height: 28,
                     width: 28,
-                    // kept white on purpose: the heart icons are image assets
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -890,6 +932,29 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
                   ),
                 ),
               ),
+              if (!product.isInStock)
+                Positioned(
+                  bottom: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.onSurface.withValues(alpha: 0.87),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'OUT OF STOCK',
+                      style: TextStyle(
+                        color: colors.surface,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -938,17 +1003,17 @@ class _SeasonSaleScreenState extends State<SeasonSaleScreen> {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              '₹${priceDouble.toInt()}',
+              '$symbol${_formatAmount(priceDouble)}',
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: colors.onSurface,
               ),
             ),
-            if (compareDouble != null && compareDouble > priceDouble) ...[
+            if (hasStrike) ...[
               const SizedBox(width: 6),
               Text(
-                '₹${compareDouble.toInt()}',
+                '$symbol${_formatAmount(originalDouble)}',
                 style: TextStyle(
                   fontSize: 12,
                   color: context.appColors.mutedText,

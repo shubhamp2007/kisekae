@@ -115,12 +115,20 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
           backgroundColor: backgroundColor,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: colors.onSurface,
-              size: 20,
-            ),
             onPressed: () => Navigator.pop(context),
+            icon: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                border: Border.all(color: colors.onSurface, width: 2),
+              ),
+              child: Icon(
+                Icons.arrow_back_ios_new,
+                size: 16,
+                color: colors.onSurface,
+              ),
+            ),
           ),
         ),
         body: Center(
@@ -153,12 +161,20 @@ class _TrackOrderScreenState extends State<TrackOrderScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: colors.onSurface,
-            size: 20,
-          ),
           onPressed: () => Navigator.pop(context),
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+              border: Border.all(color: colors.onSurface, width: 2),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 16,
+              color: colors.onSurface,
+            ),
+          ),
         ),
         title: Text(
           "Track Order",
