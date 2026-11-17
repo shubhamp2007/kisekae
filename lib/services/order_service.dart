@@ -85,6 +85,22 @@ class OrderService extends BaseRepository {
     });
   }
 
+  Future<OrderDetail> requestRefund(
+    int orderId, {
+    required String reason,
+    CancelToken? cancelToken,
+  }) async {
+    return execute(() async {
+      final response = await _dio.post(
+        '/orders/$orderId/request-refund/',
+        data: {'reason': reason},
+        cancelToken: cancelToken,
+      );
+
+      return OrderDetail.fromJson(_dataMap(response.data)!);
+    });
+  }
+
   Future<OrderTrackingDetail> trackOrder(
     int orderId, {
     CancelToken? cancelToken,

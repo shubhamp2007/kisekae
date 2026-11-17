@@ -21,6 +21,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   OrderDetail? _orderDetail;
   bool _isLoading = true;
   bool _isCancelling = false;
+  bool _isRequestingRefund = false;
 
   @override
   void initState() {
@@ -137,6 +138,118 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         setState(() => _isCancelling = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            content: Text('Failed to cancel order: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleRequestRefund() async {
+    if (_orderDetail == null) return;
+
+    final reasonController = TextEditingController();
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFFFFF8F0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: const Text(
+                "Request Refund",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Please provide a reason for your refund request for Order #${_orderDetail!.orderNumber}.",
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: reasonController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: "Enter your reason (min 3 characters)...",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF8B2E3E)),
+                      ),
+                    ),
+                    onChanged: (_) => setDialogState(() {}),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text(
+                    "Cancel",
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                ),
+                TextButton(
+                  onPressed: reasonController.text.trim().length >= 3
+                      ? () => Navigator.pop(ctx, true)
+                      : null,
+                  child: const Text(
+                    "Submit",
+                    style: TextStyle(
+                      color: Color(0xFF8B2E3E),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (submitted != true) return;
+
+    final reason = reasonController.text.trim();
+    setState(() => _isRequestingRefund = true);
+
+    try {
+      final updatedOrder = await _orderService.requestRefund(
+        _orderDetail!.id,
+        reason: reason,
+        cancelToken: _cancelToken,
+      );
+
+      if (mounted) {
+        setState(() {
+          _orderDetail = updatedOrder;
+          _isRequestingRefund = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Refund request submitted successfully."),
+            backgroundColor: Colors.black87,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isRequestingRefund = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to request refund: ${e.toString()}'),
+            backgroundColor: Colors.red,
             content: Text(
               'Failed to cancel order: ${e.toString()}',
               style: TextStyle(color: context.cs.onError),
@@ -201,6 +314,206 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     final order = _orderDetail!;
     final canCancelOrder = _canCancel(order.status);
+    final statusUpper = order.status.toUpperCase();
+    final isDelivered = statusUpper == 'DELIVERED';
+    final isRefundRequested = statusUpper == 'REFUND_REQUESTED';
+    final isRefunded = statusUpper == 'REFUNDED';
+    Widget actionButtons;
+
+    if (canCancelOrder) {
+      actionButtons = Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => TrackOrderScreen(orderId: order.id),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: const BorderSide(color: primaryColor),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                "Track order",
+                style: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: (canCancelOrder && !_isCancelling)
+                  ? _handleCancelOrder
+                  : null,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: const BorderSide(color: primaryColor),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: _isCancelling
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: primaryColor,
+                      ),
+                    )
+                  : const Text(
+                      "Cancel order",
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      );
+    } else if (isDelivered || isRefundRequested) {
+      actionButtons = Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => TrackOrderScreen(orderId: order.id),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: const BorderSide(color: primaryColor),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                "Track order",
+                style: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: (isDelivered && !_isRequestingRefund)
+                  ? _handleRequestRefund
+                  : null,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: BorderSide(
+                  color: isRefundRequested ? Colors.amber : primaryColor,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: _isRequestingRefund
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: primaryColor,
+                      ),
+                    )
+                  : Text(
+                      isRefundRequested ? "Refund Requested" : "Request Refund",
+                      style: TextStyle(
+                        color: isRefundRequested
+                            ? Colors.amber.shade800
+                            : primaryColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      actionButtons = Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: (statusUpper == 'CANCELLED')
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => TrackOrderScreen(orderId: order.id),
+                        ),
+                      );
+                    },
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: BorderSide(
+                  color: statusUpper == 'CANCELLED'
+                      ? Colors.black26
+                      : primaryColor,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                "Track order",
+                style: TextStyle(
+                  color: primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: null,
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                side: const BorderSide(color: Colors.black26),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: Text(
+                statusUpper == 'CANCELLED' ? "Cancelled" : "Cancel order",
+                style: const TextStyle(
+                  color: Colors.black38,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final hasRefundAmount =
+        order.refundAmount != null &&
+        order.refundAmount!.isNotEmpty &&
+        order.refundAmount != '0';
     final isCancelled = order.status.toUpperCase() == 'CANCELLED';
 
     return Scaffold(
@@ -239,7 +552,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Ordered Products Summary Card
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -309,6 +621,33 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
+                        child: isRefunded
+                            ? Chip(
+                                label: const Text(
+                                  "Refunded",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                backgroundColor: Colors.green.shade600,
+                                padding: EdgeInsets.zero,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              )
+                            : Text(
+                                _formatStatus(order.status),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: statusUpper == 'CANCELLED'
+                                      ? Colors.red.shade700
+                                      : isRefundRequested
+                                      ? Colors.amber.shade800
+                                      : primaryColor,
+                                ),
+                              ),
                         child: Text(
                           order.status,
                           style: TextStyle(
@@ -326,6 +665,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
             const SizedBox(height: 16),
 
+            actionButtons,
+
+            const SizedBox(height: 20),
+
+            const Text(
             Row(
               children: [
                 Expanded(
@@ -433,6 +777,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
             const SizedBox(height: 20),
 
+            const Text(
             // Pricing Details Section
             Text(
               "Pricing Details",
@@ -456,14 +801,21 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                     order.formattedTotal,
                     isBold: true,
                   ),
+                  if (hasRefundAmount) ...[
+                    const SizedBox(height: 8),
+                    _pricingRow(
+                      "Refund Amount",
+                      "${order.currencySymbol}${order.refundAmount}",
+                      valueColor: Colors.green.shade700,
+                      isBold: false,
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   SizedBox(
                     width: double.infinity,
                     height: 44,
                     child: OutlinedButton(
-                      onPressed: () {
-                        // Download invoice file action
-                      },
+                      onPressed: () {},
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: cs.primary),
                         shape: RoundedRectangleBorder(
@@ -517,6 +869,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
+  Widget _pricingRow(
+    String label,
+    String value, {
+    bool isBold = false,
+    Color? valueColor,
+  }) {
   Widget _pricingRow(String label, String value, {bool isBold = false}) {
     final onSurface = context.cs.onSurface;
 
@@ -536,6 +894,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            color: valueColor ?? Colors.black,
             color: onSurface,
           ),
         ),

@@ -13,6 +13,7 @@ import 'package:kisekae/models/wishlist.dart';
 import 'package:kisekae/screens/ar_screen.dart';
 
 import 'package:kisekae/screens/cart.dart';
+import 'package:kisekae/screens/pose_screen.dart';
 import 'package:kisekae/services/buyer_address.dart';
 import 'package:kisekae/services/buyer_product.dart';
 
@@ -1054,6 +1055,39 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PoseDetectionScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.view_in_ar,
+                      color: primaryColor,
+                      size: 20,
+                    ),
+                    label: const Text(
+                      "AR Try On",
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: primaryColor, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
                   child: TextButton.icon(
                     onPressed: () =>
                         showAddToComboSheet(context, productId: product.id),
@@ -1072,7 +1106,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
 
                 Row(

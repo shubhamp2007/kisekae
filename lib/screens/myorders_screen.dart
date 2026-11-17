@@ -28,6 +28,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
     'SHIPPED',
     'DELIVERED',
     'CANCELLED',
+    'REFUND_REQUESTED',
+    'REFUNDED',
   ];
 
   @override
@@ -89,12 +91,16 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
     switch (status.toUpperCase()) {
       case 'DELIVERED':
+      case 'REFUNDED':
+        return Colors.green.shade700;
         return c.success;
       case 'SHIPPED':
       case 'PROCESSING':
         return isDark ? Colors.blue.shade300 : Colors.blue.shade700;
       case 'CONFIRMED':
       case 'PENDING':
+      case 'REFUND_REQUESTED':
+        return Colors.amber.shade800;
         return c.warning;
       case 'CANCELLED':
         return cs.error;
@@ -189,7 +195,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
           const SizedBox(height: 8),
 
-          // Orders List
           Expanded(
             child: _isLoading
                 ? Center(child: CircularProgressIndicator(color: cs.primary))
@@ -228,14 +233,17 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         final statusColor = _getStatusColor(order.status);
 
                         return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) =>
                                     OrderDetailsScreen(orderId: order.id),
                               ),
                             );
+                            if (mounted) {
+                              _fetchOrders();
+                            }
                           },
                           child: Container(
                             padding: const EdgeInsets.all(16),
@@ -294,7 +302,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
                                 const SizedBox(height: 12),
 
-                                // Item Count & Date
                                 Row(
                                   children: [
                                     Icon(
@@ -324,7 +331,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                 ),
                                 Divider(height: 20, color: c.border),
 
-                                // Total Price & Navigation Arrow
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
