@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/user_address.dart';
 import 'package:kisekae/screens/edit_address.dart';
 import 'package:kisekae/screens/new_address.dart';
@@ -65,32 +66,37 @@ class _AddressesScreenState extends State<AddressesScreen> {
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final colors = Theme.of(context).colorScheme;
+            final isDark = colors.brightness == Brightness.dark;
             return AlertDialog(
-              backgroundColor: const Color(0xFFFFF9F2),
+              backgroundColor: context.appColors.card,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
-                side: const BorderSide(color: Color(0xFFB78876)),
+                side: BorderSide(color: context.appColors.border),
               ),
-              title: const Text(
+              title: Text(
                 "Delete Address",
                 style: TextStyle(
-                  color: Color(0xFF8B2E3E),
+                  color: colors.primary,
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
               ),
-              content: const Text(
+              content: Text(
                 "Do you want to delete this address?",
-                style: TextStyle(color: Colors.black87, fontSize: 15),
+                style: TextStyle(color: colors.onSurface, fontSize: 15),
               ),
               actions: [
                 TextButton(
                   onPressed: isDeleting
                       ? null
                       : () => Navigator.pop(dialogContext),
-                  child: const Text(
+                  child: Text(
                     "Cancel",
-                    style: TextStyle(color: Colors.grey, fontSize: 15),
+                    style: TextStyle(
+                      color: colors.onSurfaceVariant,
+                      fontSize: 15,
+                    ),
                   ),
                 ),
                 ElevatedButton(
@@ -112,22 +118,30 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(message),
-                                backgroundColor: Colors.green,
+                                content: Text(
+                                  message,
+                                  style: TextStyle(
+                                    color: isDark ? Colors.black : Colors.white,
+                                  ),
+                                ),
+                                backgroundColor: context.appColors.success,
                               ),
                             );
                           } catch (e) {
                             setDialogState(() => isDeleting = false);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(e.toString()),
-                                backgroundColor: Colors.red,
+                                content: Text(
+                                  e.toString(),
+                                  style: TextStyle(color: colors.onError),
+                                ),
+                                backgroundColor: colors.error,
                               ),
                             );
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade700,
+                    backgroundColor: colors.error,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -138,17 +152,17 @@ class _AddressesScreenState extends State<AddressesScreen> {
                     ),
                   ),
                   child: isDeleting
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: colors.onError,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           "Delete",
-                          style: TextStyle(color: Colors.white, fontSize: 15),
+                          style: TextStyle(color: colors.onError, fontSize: 15),
                         ),
                 ),
               ],
@@ -161,7 +175,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const pageBgColor = Color(0xFFEFECE6);
+    final colors = Theme.of(context).colorScheme;
+    final pageBgColor = colors.surface;
 
     return Scaffold(
       backgroundColor: pageBgColor,
@@ -175,20 +190,20 @@ class _AddressesScreenState extends State<AddressesScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.arrow_back_ios_new,
               size: 18,
-              color: Colors.black,
+              color: colors.onSurface,
             ),
           ),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "Address",
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontWeight: FontWeight.bold,
             fontSize: 22,
           ),
@@ -198,14 +213,14 @@ class _AddressesScreenState extends State<AddressesScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           children: [
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 "Saved address",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
             ),
@@ -232,8 +247,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
                       }
                     },
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF8B2E3E),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(26),
                       ),
@@ -257,10 +272,10 @@ class _AddressesScreenState extends State<AddressesScreen> {
   }
 
   Widget _buildAddressContent() {
+    final colors = Theme.of(context).colorScheme;
+
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF8B2E3E)),
-      );
+      return Center(child: CircularProgressIndicator(color: colors.primary));
     }
 
     if (_errorMessage != null) {
@@ -268,18 +283,18 @@ class _AddressesScreenState extends State<AddressesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline_rounded,
               size: 48,
-              color: Colors.black54,
+              color: colors.onSurfaceVariant,
             ),
             const SizedBox(height: 12),
             Text(
               _errorMessage!,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
-                color: Colors.black87,
+                color: colors.onSurface,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -287,12 +302,12 @@ class _AddressesScreenState extends State<AddressesScreen> {
             ElevatedButton(
               onPressed: _fetchAddresses,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B2E3E),
+                backgroundColor: colors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text("Retry", style: TextStyle(color: Colors.white)),
+              child: Text("Retry", style: TextStyle(color: colors.onPrimary)),
             ),
           ],
         ),
@@ -301,7 +316,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
     if (_addresses.isEmpty) {
       return RefreshIndicator(
-        color: const Color(0xFF8B2E3E),
+        color: colors.primary,
         onRefresh: _fetchAddresses,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -310,18 +325,18 @@ class _AddressesScreenState extends State<AddressesScreen> {
             child: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(
                     Icons.location_off_outlined,
                     size: 56,
-                    color: Colors.black38,
+                    color: colors.outline,
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
                     "No saved addresses found",
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.black87,
+                      color: colors.onSurface,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -334,7 +349,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
     }
 
     return RefreshIndicator(
-      color: const Color(0xFF8B2E3E),
+      color: colors.primary,
       onRefresh: _fetchAddresses,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -349,6 +364,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
   }
 
   Widget _buildAddressCard(CustomerAddress address) {
+    final colors = Theme.of(context).colorScheme;
     final bool isSelected = _selectedAddressId == address.id;
 
     final addressSummary = address.addressLine1.isNotEmpty
@@ -371,7 +387,13 @@ class _AddressesScreenState extends State<AddressesScreen> {
         } catch (e) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(
+                e.toString(),
+                style: TextStyle(color: colors.onError),
+              ),
+              backgroundColor: colors.error,
+            ),
           );
         }
       },
@@ -379,10 +401,10 @@ class _AddressesScreenState extends State<AddressesScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF9F2),
+          color: context.appColors.card,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? Colors.black : Colors.transparent,
+            color: isSelected ? colors.onSurface : Colors.transparent,
             width: 2,
           ),
         ),
@@ -395,17 +417,17 @@ class _AddressesScreenState extends State<AddressesScreen> {
                   isSelected
                       ? Icons.radio_button_checked
                       : Icons.radio_button_unchecked,
-                  color: Colors.black,
+                  color: colors.onSurface,
                   size: 22,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     address.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                   ),
                 ),
@@ -417,15 +439,15 @@ class _AddressesScreenState extends State<AddressesScreen> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF8B2E3E).withValues(alpha: 0.12),
+                      color: colors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
+                    child: Text(
                       "Default",
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF8B2E3E),
+                        color: colors.primary,
                       ),
                     ),
                   ),
@@ -443,7 +465,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                       _fetchAddresses();
                     }
                   },
-                  child: const Icon(Icons.edit, size: 18, color: Colors.black),
+                  child: Icon(Icons.edit, size: 18, color: colors.onSurface),
                 ),
               ],
             ),
@@ -462,11 +484,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                 ),
                 GestureDetector(
                   onTap: () => _showDeleteDialog(address),
-                  child: const Icon(
-                    Icons.delete,
-                    size: 18,
-                    color: Colors.black,
-                  ),
+                  child: Icon(Icons.delete, size: 18, color: colors.onSurface),
                 ),
               ],
             ),
@@ -477,16 +495,20 @@ class _AddressesScreenState extends State<AddressesScreen> {
   }
 
   Widget _infoRow({required IconData icon, required String text}) {
+    final colors = Theme.of(context).colorScheme;
     return Row(
       children: [
-        SizedBox(width: 28, child: Icon(icon, size: 18, color: Colors.black)),
+        SizedBox(
+          width: 28,
+          child: Icon(icon, size: 18, color: colors.onSurface),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
-              color: Colors.black,
+              color: colors.onSurface,
               fontWeight: FontWeight.w400,
             ),
             maxLines: 1,

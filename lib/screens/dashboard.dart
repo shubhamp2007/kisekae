@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/advertising.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/dashboard_model.dart';
+import 'package:kisekae/models/store_create.dart';
 import 'package:kisekae/screens/add_product.dart';
 import 'package:kisekae/screens/advertising_screen.dart';
 import 'package:kisekae/screens/analytics_screen.dart';
@@ -12,6 +14,7 @@ import 'package:kisekae/screens/store_order.dart';
 import 'package:kisekae/screens/promotion_screen.dart';
 import 'package:kisekae/services/analytics.dart';
 import 'package:kisekae/services/seller_product.dart';
+import 'package:kisekae/services/store.dart';
 import 'package:kisekae/widgets/seller_bottom_bar.dart';
 
 class SellerDashboardScreen extends StatefulWidget {
@@ -26,17 +29,20 @@ class SellerDashboardScreen extends StatefulWidget {
 class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   int _currentIndex = 0;
   final HandleProduct _productService = HandleProduct();
+  final StoreOperations _storeService = StoreOperations();
 
-  static const Color _widgetBgColor = Color(0xFFFFF9F2);
+  Color get _widgetBgColor => context.appColors.card;
 
   final Analytics _analytics = Analytics();
   final CancelToken _cancelToken = CancelToken();
   DashboardMetrics? _metrics;
+  Store? _store;
 
   @override
   void initState() {
     super.initState();
     _loadMetrics();
+    _loadStore();
   }
 
   @override
@@ -71,6 +77,16 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           : 'Could not load dashboard data';
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  Future<void> _loadStore() async {
+    try {
+      final store = await _storeService.getStore(widget.storeId);
+      if (!mounted) return;
+      setState(() => _store = store);
+    } catch (e) {
+      debugPrint('Failed to load store banner: $e');
     }
   }
 
@@ -152,11 +168,6 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
         toolbarHeight: 50,
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
-            size: 20,
-          ),
           onPressed: () {
             Navigator.pushAndRemoveUntil(
               context,
@@ -166,15 +177,28 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
               (route) => false,
             );
           },
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+              border: Border.all(color: colorScheme.onSurface, width: 2),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colorScheme.onSurface,
+            ),
+          ),
         ),
         title: Align(
           alignment: Alignment.centerLeft,
-          child: const Text(
+          child: Text(
             "KISEKAE",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF7D2938),
+              color: colorScheme.primary,
               fontFamily: 'serif',
             ),
           ),
@@ -224,6 +248,9 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   Widget _buildStoreBanner(Size size, ColorScheme colorScheme) {
     final bannerWidth = size.width * (320 / 360);
     final bannerHeight = size.height * (182 / 840);
+    final bannerUrl = _store?.bannerUrl?.trim() ?? '';
+    final hasNetworkBanner =
+        bannerUrl.isNotEmpty && bannerUrl.startsWith('http');
 
     return Center(
       child: Container(
@@ -233,17 +260,32 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
           borderRadius: BorderRadius.circular(20),
           color: _widgetBgColor,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
+          fit: StackFit.expand,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.asset(
-                'assets/images/StoreBanner.png',
-                width: double.infinity,
-                height: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
+            hasNetworkBanner
+                ? Image.network(
+                    bannerUrl,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.primary,
+                        ),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/images/StoreBanner.png',
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Image.asset(
+                    'assets/images/StoreBanner.png',
+                    fit: BoxFit.cover,
+                  ),
           ],
         ),
       ),
@@ -569,7 +611,10 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                     ),
                     Text(
                       "Create campaigns to reach more buyer",
-                      style: TextStyle(fontSize: 12, color: Color(0xFF575655)),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

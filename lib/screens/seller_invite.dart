@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/invite.dart';
 import 'package:kisekae/screens/send_invite.dart';
@@ -39,12 +40,21 @@ class _InvitesScreenState extends State<InvitesScreen> {
   }
 
   void _showMessage(String text, {bool error = false}) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(text),
-          backgroundColor: error ? Colors.red : Colors.green,
+          content: Text(
+            text,
+            style: TextStyle(
+              color: error
+                  ? scheme.onError
+                  : (isDark ? Colors.black : Colors.white),
+            ),
+          ),
+          backgroundColor: error ? scheme.error : context.appColors.success,
         ),
       );
   }
@@ -191,9 +201,9 @@ class _InvitesScreenState extends State<InvitesScreen> {
               showCheckmark: false,
               onSelected: _loading ? null : (_) => _changeFilter(entry.value),
               selectedColor: cs.primary,
-              backgroundColor: const Color(0xFFFFF6EF),
+              backgroundColor: context.appColors.card,
               side: BorderSide(
-                color: selected ? cs.primary : const Color(0xFFB78876),
+                color: selected ? cs.primary : context.appColors.border,
               ),
               labelStyle: TextStyle(
                 color: selected ? cs.onPrimary : cs.primary,
@@ -234,7 +244,11 @@ class _InvitesScreenState extends State<InvitesScreen> {
 
     if (_invites.isEmpty) {
       return _centered([
-        Icon(Icons.mail_outline, size: 56, color: cs.primary.withOpacity(0.7)),
+        Icon(
+          Icons.mail_outline,
+          size: 56,
+          color: cs.primary.withValues(alpha: 0.7),
+        ),
         const SizedBox(height: 16),
         Text(
           _status == null ? 'No invitations yet' : 'No invitations here',
@@ -249,7 +263,10 @@ class _InvitesScreenState extends State<InvitesScreen> {
         Text(
           'Invite people to help you manage this store.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: cs.onSurface.withOpacity(0.7)),
+          style: TextStyle(
+            fontSize: 14,
+            color: cs.onSurface.withValues(alpha: 0.7),
+          ),
         ),
       ]);
     }
@@ -407,7 +424,7 @@ class _InviteCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF6EF),
+        color: context.appColors.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -426,16 +443,16 @@ class _InviteCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0xFFE0C3C7),
+                  color: cs.primary.withValues(alpha: 0.2),
                 ),
                 child: Text(
                   initial,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: cs.onSurface,
                   ),
                 ),
               ),
@@ -463,7 +480,7 @@ class _InviteCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            color: cs.onSurface.withOpacity(0.65),
+                            color: cs.onSurface.withValues(alpha: 0.65),
                           ),
                         ),
                       ),
@@ -479,7 +496,7 @@ class _InviteCard extends StatelessWidget {
             _dateLine(),
             style: TextStyle(
               fontSize: 12,
-              color: cs.onSurface.withOpacity(0.65),
+              color: cs.onSurface.withValues(alpha: 0.65),
             ),
           ),
           if (canResend) ...[
@@ -555,41 +572,38 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    late final Color background;
+    final cs = Theme.of(context).colorScheme;
+    final app = context.appColors;
+
     late final Color foreground;
     late final String label;
 
     switch (status) {
       case 'ACCEPTED':
-        background = const Color(0xFFE3F2E5);
-        foreground = const Color(0xFF2E7D32);
+        foreground = app.success;
         label = 'Accepted';
         break;
       case 'DECLINED':
-        background = const Color(0xFFFBE3E3);
-        foreground = const Color(0xFFC62828);
+        foreground = cs.error;
         label = 'Declined';
         break;
       case 'REVOKED':
-        background = const Color(0xFFECECEC);
-        foreground = const Color(0xFF616161);
+        foreground = cs.onSurfaceVariant;
         label = 'Revoked';
         break;
       case 'EXPIRED':
-        background = const Color(0xFFEFE6E1);
-        foreground = const Color(0xFF8D6E63);
+        foreground = app.mutedText;
         label = 'Expired';
         break;
       default:
-        background = const Color(0xFFFBEFD5);
-        foreground = const Color(0xFFB7791F);
+        foreground = app.warning;
         label = 'Pending';
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: background,
+        color: foreground.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/customer_order.dart';
 import 'package:kisekae/screens/myorder_detail.dart';
 import 'package:kisekae/services/order_service.dart';
@@ -84,47 +85,61 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   }
 
   Color _getStatusColor(String status) {
+    final cs = context.cs;
+    final c = context.appColors;
+    final isDark = cs.brightness == Brightness.dark;
+
     switch (status.toUpperCase()) {
       case 'DELIVERED':
       case 'REFUNDED':
         return Colors.green.shade700;
+        return c.success;
       case 'SHIPPED':
       case 'PROCESSING':
-        return Colors.blue.shade700;
+        return isDark ? Colors.blue.shade300 : Colors.blue.shade700;
       case 'CONFIRMED':
       case 'PENDING':
       case 'REFUND_REQUESTED':
         return Colors.amber.shade800;
+        return c.warning;
       case 'CANCELLED':
-        return Colors.red.shade700;
+        return cs.error;
       default:
-        return Colors.black87;
+        return cs.onSurface;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
+    final cs = context.cs;
+    final c = context.appColors;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: backgroundColor,
+        backgroundColor: cs.surface,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
-            size: 20,
-          ),
           onPressed: () => Navigator.pop(context),
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+              border: Border.all(color: cs.onSurface, width: 2),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: cs.onSurface,
+            ),
+          ),
         ),
-        title: const Text(
+        title: Text(
           "My Orders",
           style: TextStyle(
-            color: Colors.black,
+            color: cs.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -156,14 +171,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? primaryColor
-                          : const Color(0xFFFBF8F5),
+                      color: isSelected ? cs.primary : c.card,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected
-                            ? primaryColor
-                            : const Color(0xFFD3C7B8),
+                        color: isSelected ? cs.primary : c.border,
                       ),
                     ),
                     child: Center(
@@ -172,7 +183,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : Colors.black87,
+                          color: isSelected ? cs.onPrimary : cs.onSurface,
                         ),
                       ),
                     ),
@@ -186,9 +197,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: primaryColor),
-                  )
+                ? Center(child: CircularProgressIndicator(color: cs.primary))
                 : _orders.isEmpty
                 ? Center(
                     child: Column(
@@ -197,22 +206,23 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         Icon(
                           Icons.shopping_bag_outlined,
                           size: 64,
-                          color: Colors.black.withOpacity(0.3),
+                          color: c.mutedText,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
+                        Text(
                           "No orders found",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black54,
+                            color: c.mutedText,
                           ),
                         ),
                       ],
                     ),
                   )
                 : RefreshIndicator(
-                    color: primaryColor,
+                    color: cs.primary,
+                    backgroundColor: c.card,
                     onRefresh: _fetchOrders,
                     child: ListView.separated(
                       padding: const EdgeInsets.all(16),
@@ -238,16 +248,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFBF8F5),
+                              color: c.card,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFFE5DDD2),
-                              ),
-                              boxShadow: const [
+                              border: Border.all(color: c.border),
+                              boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black12,
+                                  color: cs.shadow.withAlpha(31),
                                   blurRadius: 4,
-                                  offset: Offset(0, 2),
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
@@ -259,9 +267,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                   children: [
                                     Text(
                                       "Order: ${order.orderNumber}",
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
+                                        color: cs.onSurface,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
@@ -273,7 +282,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: statusColor.withOpacity(0.12),
+                                          color: statusColor.withAlpha(31),
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
@@ -295,17 +304,17 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.inventory_2_outlined,
                                       size: 16,
-                                      color: Colors.black54,
+                                      color: c.mutedText,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
                                       "${order.itemsCount} Item${order.itemsCount > 1 ? 's' : ''}",
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
-                                        color: Colors.black87,
+                                        color: cs.onSurface,
                                       ),
                                     ),
                                     const Spacer(),
@@ -313,17 +322,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                       order.createdAt.length >= 10
                                           ? order.createdAt.substring(0, 10)
                                           : order.createdAt,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
-                                        color: Colors.black54,
+                                        color: c.mutedText,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const Divider(
-                                  height: 20,
-                                  color: Color(0xFFE5DDD2),
-                                ),
+                                Divider(height: 20, color: c.border),
 
                                 Row(
                                   mainAxisAlignment:
@@ -331,27 +337,27 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                   children: [
                                     Text(
                                       "Total: ₹${order.totalAmount}",
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: primaryColor,
+                                        color: cs.primary,
                                       ),
                                     ),
-                                    const Row(
+                                    Row(
                                       children: [
                                         Text(
                                           "View Details",
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.black54,
+                                            color: c.mutedText,
                                           ),
                                         ),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Icon(
                                           Icons.arrow_forward_ios,
                                           size: 12,
-                                          color: Colors.black54,
+                                          color: c.mutedText,
                                         ),
                                       ],
                                     ),

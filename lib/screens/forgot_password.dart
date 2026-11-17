@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/services/email_auth.dart';
 import 'package:kisekae/screens/password_otp.dart';
 
@@ -49,10 +50,20 @@ class _ForgotPasswordState extends State<ForgotPassword> {
         );
       }
       if (response.message.isNotEmpty) {
+        final scheme = Theme.of(context).colorScheme;
+        final isDark = scheme.brightness == Brightness.dark;
+        final successFg = isDark ? Colors.black : Colors.white;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
+            content: Text(
+              response.message,
+              style: TextStyle(
+                color: response.success ? successFg : scheme.onError,
+              ),
+            ),
+            backgroundColor: response.success
+                ? context.appColors.success
+                : scheme.error,
           ),
         );
       }
@@ -67,7 +78,7 @@ class _ForgotPasswordState extends State<ForgotPassword> {
     final size = MediaQuery.of(context).size;
     final simpleBlackBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Colors.black, width: 1),
+      borderSide: BorderSide(color: colors.onSurface, width: 1),
     );
 
     return Scaffold(
@@ -81,9 +92,13 @@ class _ForgotPasswordState extends State<ForgotPassword> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
@@ -158,8 +173,8 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                           fillColor: colors.surfaceContainerHighest,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(
-                              color: Colors.black,
+                            borderSide: BorderSide(
+                              color: colors.onSurface,
                               width: 1,
                             ),
                           ),
@@ -184,12 +199,12 @@ class _ForgotPasswordState extends State<ForgotPassword> {
                       ),
                     ),
                     child: _sendingOtp
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 22,
                             width: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: Colors.white,
+                              color: colors.onPrimary,
                             ),
                           )
                         : const Text(

@@ -2,10 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kisekae/screens/dashboard.dart';
-
-import 'package:kisekae/screens/home_screen.dart';
-import 'package:kisekae/screens/seller_start.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/services/email_auth.dart';
 import 'package:kisekae/services/post_auth.dart';
 import 'package:kisekae/services/storage.dart';
@@ -25,9 +22,6 @@ class VerifyCodeScreen extends StatefulWidget {
 }
 
 class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
-  static const Color _maroon = Color(0xFF8B2E3E);
-  static const Color _background = Color(0xFFEFE9E4);
-
   final int _otpLength = 6;
   late final List<FocusNode> _focusNodes;
   late final List<TextEditingController> _controllers;
@@ -172,6 +166,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     if (!mounted) return;
     setState(() => _loading = false);
 
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final successFg = isDark ? Colors.black : Colors.white;
+
     if (response.success) {
       await TokenStorage().saveEmail(widget.email);
       if (!mounted) return;
@@ -179,8 +177,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       if (response.message.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
-            backgroundColor: Colors.green,
+            content: Text(response.message, style: TextStyle(color: successFg)),
+            backgroundColor: context.appColors.success,
           ),
         );
       }
@@ -188,9 +186,12 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       await PostAuth.afterAuth(context, response, picked: widget.isSeller);
     } else if (response.message.toLowerCase().contains('expired')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Your sign-up expired. Please register again.'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text(
+            'Your sign-up expired. Please register again.',
+            style: TextStyle(color: scheme.onError),
+          ),
+          backgroundColor: scheme.error,
         ),
       );
       Navigator.popUntil(context, (route) => route.isFirst);
@@ -204,7 +205,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text(_errorMessage), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              _errorMessage,
+              style: TextStyle(color: scheme.onError),
+            ),
+            backgroundColor: scheme.error,
+          ),
         );
     }
   }
@@ -236,8 +243,12 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     final message = response.message.isNotEmpty
         ? response.message
         : 'Failed to resend code';
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message, style: TextStyle(color: scheme.onError)),
+        backgroundColor: scheme.error,
+      ),
     );
   }
 
@@ -245,11 +256,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
+    final maroon = colors.primary;
+    final background = colors.surface;
 
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: _background,
+        backgroundColor: background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -258,9 +271,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black, width: 1.5),
+              border: Border.all(color: colors.onSurface, width: 1.5),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 14),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 14,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
@@ -317,22 +334,22 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                         fillColor: colors.surfaceContainerHighest,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(
-                            color: Colors.black,
+                          borderSide: BorderSide(
+                            color: colors.onSurface,
                             width: 1,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide(
-                            color: _hasError ? Colors.red : Colors.black,
+                            color: _hasError ? colors.error : colors.onSurface,
                             width: 1.5,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide(
-                            color: _hasError ? Colors.red : Colors.black,
+                            color: _hasError ? colors.error : colors.onSurface,
                             width: 1.5,
                           ),
                         ),
@@ -348,7 +365,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                     _errorMessage,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                    style: TextStyle(color: colors.error, fontSize: 14),
                   ),
                 ),
               SizedBox(height: size.height * 0.04),
@@ -365,7 +382,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                         'Resend (0:${_secondsLeft.toString().padLeft(2, '0')})',
                         style: TextStyle(
                           fontSize: size.width * 0.037,
-                          color: _maroon,
+                          color: maroon,
                         ),
                       )
                     else
@@ -376,7 +393,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                           style: TextStyle(
                             fontSize: size.width * 0.037,
                             fontWeight: FontWeight.bold,
-                            color: _maroon,
+                            color: maroon,
                           ),
                         ),
                       ),
@@ -392,21 +409,23 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                       ? null
                       : _verifyCode,
                   style: FilledButton.styleFrom(
-                    backgroundColor: _maroon,
-                    disabledBackgroundColor: _maroon,
-                    foregroundColor: Colors.white,
-                    disabledForegroundColor: Colors.white70,
+                    backgroundColor: maroon,
+                    disabledBackgroundColor: maroon,
+                    foregroundColor: colors.onPrimary,
+                    disabledForegroundColor: colors.onPrimary.withValues(
+                      alpha: 0.7,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child: _loading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 22,
                           width: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
-                            color: Colors.white,
+                            color: colors.onPrimary,
                           ),
                         )
                       : const Text('Verify'),

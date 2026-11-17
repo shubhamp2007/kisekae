@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:kisekae/screens/home_screen.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/services/email_auth.dart';
 import 'package:kisekae/services/post_auth.dart';
 import 'package:kisekae/services/storage.dart';
@@ -58,10 +58,20 @@ class _SigninOtpState extends State<SigninOtp> {
       if (!mounted) return;
       if (response.success) _startTimer();
       if (response.message.isNotEmpty) {
+        final scheme = Theme.of(context).colorScheme;
+        final isDark = scheme.brightness == Brightness.dark;
+        final successFg = isDark ? Colors.black : Colors.white;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
+            content: Text(
+              response.message,
+              style: TextStyle(
+                color: response.success ? successFg : scheme.onError,
+              ),
+            ),
+            backgroundColor: response.success
+                ? context.appColors.success
+                : scheme.error,
           ),
         );
       }
@@ -175,7 +185,7 @@ class _SigninOtpState extends State<SigninOtp> {
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
-    const maroon = Color(0xFF8B2E3E);
+    final maroon = colors.primary;
 
     return Scaffold(
       appBar: AppBar(
@@ -186,9 +196,13 @@ class _SigninOtpState extends State<SigninOtp> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
@@ -245,22 +259,22 @@ class _SigninOtpState extends State<SigninOtp> {
                       fillColor: colors.surfaceContainerHighest,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Colors.black,
+                        borderSide: BorderSide(
+                          color: colors.onSurface,
                           width: 1,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
-                          color: _hasError ? Colors.red : Colors.black,
+                          color: _hasError ? colors.error : colors.onSurface,
                           width: 1.5,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
-                          color: _hasError ? Colors.red : Colors.black,
+                          color: _hasError ? colors.error : colors.onSurface,
                           width: 1.5,
                         ),
                       ),
@@ -279,7 +293,7 @@ class _SigninOtpState extends State<SigninOtp> {
                     _errorText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                    style: TextStyle(color: colors.error, fontSize: 14),
                   ),
                 ),
               ),
@@ -324,7 +338,7 @@ class _SigninOtpState extends State<SigninOtp> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: size.width * 0.04,
-                  color: Colors.black,
+                  color: colors.onSurface,
                 ),
               ),
             ),
@@ -343,12 +357,12 @@ class _SigninOtpState extends State<SigninOtp> {
                   ),
                 ),
                 child: _verifying
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: colors.onPrimary,
                         ),
                       )
                     : Text(

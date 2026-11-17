@@ -15,23 +15,50 @@ class FeaturedProductsRow extends StatefulWidget {
 }
 
 class _FeaturedProductsRowState extends State<FeaturedProductsRow> {
+  static const double _gap = 12;
+  static const int _pageSize = 20;
+  static const double _loadMoreThreshold = 200;
+
   final Product _productService = Product();
   final CancelToken _cancelToken = CancelToken();
+  final ScrollController _scrollController = ScrollController();
 
-  List<ProductDetail> _products = [];
+  final List<ProductDetail> _products = [];
+  final Set<int> _seenIds = {};
+
   bool _isLoading = true;
+  bool _isLoadingMore = false;
   bool _hasError = false;
+  bool _hasMore = false;
+  int _page = 1;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _load();
   }
 
   @override
   void dispose() {
     _cancelToken.cancel('Widget disposed');
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - _loadMoreThreshold) {
+      _loadMore();
+    }
+  }
+
+  void _addProducts(List<ProductDetail> items) {
+    for (final product in items) {
+      if (_seenIds.add(product.id)) _products.add(product);
+    }
   }
 
   Future<void> _load() async {
@@ -41,12 +68,19 @@ class _FeaturedProductsRowState extends State<FeaturedProductsRow> {
     });
 
     try {
-      final response = await _productService.getProducts(
+      final response = await _productService.getRecommendedProducts(
+        page: 1,
+        pageSize: _pageSize,
         cancelToken: _cancelToken,
       );
       if (!mounted) return;
       setState(() {
-        _products = response.results.take(widget.count).toList();
+        _products.clear();
+        _seenIds.clear();
+        _addProducts(response.adProducts);
+        _addProducts(response.results);
+        _page = 1;
+        _hasMore = response.hasNext;
         _isLoading = false;
       });
     } catch (e) {
@@ -59,6 +93,31 @@ class _FeaturedProductsRowState extends State<FeaturedProductsRow> {
     }
   }
 
+  Future<void> _loadMore() async {
+    if (_isLoading || _isLoadingMore || !_hasMore) return;
+
+    setState(() => _isLoadingMore = true);
+    try {
+      final nextPage = _page + 1;
+      final response = await _productService.getRecommendedProducts(
+        page: nextPage,
+        pageSize: _pageSize,
+        cancelToken: _cancelToken,
+      );
+      if (!mounted) return;
+      setState(() {
+        _addProducts(response.results);
+        _page = nextPage;
+        _hasMore = response.hasNext;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      if (e is DioException && e.type == DioExceptionType.cancel) return;
+      if (!mounted) return;
+      setState(() => _isLoadingMore = false);
+    }
+  }
+
   void _openProduct(ProductDetail product) {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -67,24 +126,40 @@ class _FeaturedProductsRowState extends State<FeaturedProductsRow> {
     );
   }
 
+  double _cardWidth(double maxWidth) {
+    final totalGap = _gap * (widget.count - 1);
+    return (maxWidth - totalGap) / widget.count;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) return _buildSkeleton();
     if (_hasError) return _buildError();
     if (_products.isEmpty) return const SizedBox.shrink();
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (int i = 0; i < widget.count; i++) ...[
-          if (i > 0) const SizedBox(width: 12),
-          Expanded(
-            child: i < _products.length
-                ? _buildCard(_products[i])
-                : const SizedBox.shrink(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = _cardWidth(constraints.maxWidth);
+
+        return SingleChildScrollView(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (int i = 0; i < _products.length; i++) ...[
+                if (i > 0) const SizedBox(width: _gap),
+                SizedBox(width: cardWidth, child: _buildCard(_products[i])),
+              ],
+              if (_isLoadingMore) ...[
+                const SizedBox(width: _gap),
+                _buildLoadMoreIndicator(),
+              ],
+            ],
           ),
-        ],
-      ],
+        );
+      },
     );
   }
 
@@ -106,7 +181,26 @@ class _FeaturedProductsRowState extends State<FeaturedProductsRow> {
     );
   }
 
+  Widget _buildLoadMoreIndicator() {
+    final colors = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 32,
+      height: 140,
+      child: Center(
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: colors.primary,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSkeleton() {
+    final colors = Theme.of(context).colorScheme;
     return Row(
       children: [
         for (int i = 0; i < widget.count; i++) ...[
@@ -115,7 +209,7 @@ class _FeaturedProductsRowState extends State<FeaturedProductsRow> {
             child: Container(
               height: 215,
               decoration: BoxDecoration(
-                color: const Color(0xFFE0D8CD),
+                color: colors.outlineVariant,
                 borderRadius: BorderRadius.circular(18),
               ),
             ),

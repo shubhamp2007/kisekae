@@ -5,17 +5,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/ar_model.dart';
 import 'package:kisekae/models/tryon_combo_model.dart';
 import 'package:kisekae/screens/tryon_history.dart';
 import 'package:kisekae/services/ar_service.dart';
 import 'package:kisekae/services/tryon_service.dart';
-
-const _bg = Color(0xFFEFE8DF);
-const _primary = Color(0xFF8B2E3E);
-const _canvas = Color(0xFFE0D8CD);
-const _border = Color(0xFFD3C7B8);
-const _sheetBg = Color(0xFFFFF8F0);
 
 class ArTryOnScreen extends StatefulWidget {
   final int productId;
@@ -119,7 +114,7 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
     if (_busy) return;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: _sheetBg,
+      backgroundColor: context.appColors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -129,16 +124,22 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
           children: [
             const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: _primary),
-              title: const Text('Take a photo'),
+              leading: Icon(Icons.photo_camera_outlined, color: ctx.cs.primary),
+              title: Text(
+                'Take a photo',
+                style: TextStyle(color: ctx.cs.onSurface),
+              ),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_library_outlined,
-                color: _primary,
+                color: ctx.cs.primary,
               ),
-              title: const Text('Choose from gallery'),
+              title: Text(
+                'Choose from gallery',
+                style: TextStyle(color: ctx.cs.onSurface),
+              ),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
             const SizedBox(height: 8),
@@ -260,7 +261,7 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
     if (_busy) return;
     final combo = await showModalBottomSheet<TryOnCombo>(
       context: context,
-      backgroundColor: _sheetBg,
+      backgroundColor: context.appColors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -275,7 +276,7 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: context.cs.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -298,6 +299,9 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
   }
 
   Widget _buildHeader() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Row(
       children: [
         InkWell(
@@ -308,16 +312,24 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
             width: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black54),
+              border: Border.all(color: c.mutedText),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 16),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 16,
+              color: cs.onSurface,
+            ),
           ),
         ),
-        const Expanded(
+        Expanded(
           child: Center(
             child: Text(
               'AR Try-On',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
             ),
           ),
         ),
@@ -333,9 +345,9 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
             width: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black54),
+              border: Border.all(color: c.mutedText),
             ),
-            child: const Icon(Icons.history, size: 18),
+            child: Icon(Icons.history, size: 18, color: cs.onSurface),
           ),
         ),
       ],
@@ -343,10 +355,16 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
   }
 
   Widget _buildCanvasCard() {
+    final cs = context.cs;
+    final c = context.appColors;
+    final softShadow = [
+      BoxShadow(color: cs.shadow.withAlpha(31), blurRadius: 4),
+    ];
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: Container(
-        color: _canvas,
+        color: cs.surfaceContainerHighest,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
@@ -377,36 +395,37 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: c.card,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.black12, blurRadius: 4),
-                      ],
+                      boxShadow: softShadow,
                     ),
                     child: Text(
                       _showResult ? 'See original' : 'See result',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
                 ),
               ),
             if (_busy)
+              // Scrim over the photo: dark in both themes so the white
+              // (onPrimary) spinner/text stays readable.
               Positioned.fill(
                 child: Container(
-                  color: Colors.black45,
+                  color: cs.scrim.withAlpha(115),
                   child: Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const CircularProgressIndicator(color: Colors.white),
+                        CircularProgressIndicator(color: cs.onPrimary),
                         const SizedBox(height: 14),
                         Text(
                           _statusText,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: cs.onPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -422,6 +441,9 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
   }
 
   Widget _buildCanvasContent() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     if (_resultReady && _showResult) {
       return Image.network(
         _resultUrl!,
@@ -429,11 +451,11 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
         alignment: Alignment.topCenter,
         loadingBuilder: (_, child, progress) => progress == null
             ? child
-            : const Center(child: CircularProgressIndicator(color: _primary)),
-        errorBuilder: (_, __, ___) => const Center(
+            : Center(child: CircularProgressIndicator(color: cs.primary)),
+        errorBuilder: (_, __, ___) => Center(
           child: Text(
             'Could not load the image',
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(color: c.mutedText),
           ),
         ),
       );
@@ -445,10 +467,10 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
         photo,
         fit: BoxFit.cover,
         alignment: Alignment.topCenter,
-        errorBuilder: (_, __, ___) => const Center(
+        errorBuilder: (_, __, ___) => Center(
           child: Text(
             'Could not read the photo',
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(color: c.mutedText),
           ),
         ),
       );
@@ -457,20 +479,24 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _chooseSource,
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_outline, size: 96, color: Colors.black26),
-            SizedBox(height: 8),
+            Icon(Icons.person_outline, size: 96, color: c.mutedText),
+            const SizedBox(height: 8),
             Text(
               'Tap to Start AR Try-On',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: cs.onSurface,
+              ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'Take a full-length photo of yourself',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: TextStyle(fontSize: 12, color: c.mutedText),
             ),
           ],
         ),
@@ -479,6 +505,8 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
   }
 
   Widget _buildGarmentTile(ComboItem garment) {
+    final cs = context.cs;
+    final c = context.appColors;
     final combo = _selectedCombo;
     final selected = combo != null
         ? combo.items.any((i) => i.productId == garment.productId)
@@ -495,50 +523,56 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
       child: Container(
         height: 68,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: c.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? _primary : _border,
+            color: selected ? cs.primary : c.border,
             width: selected ? 2 : 1,
           ),
         ),
         clipBehavior: Clip.antiAlias,
         child: (url == null || url.isEmpty)
-            ? const Icon(Icons.checkroom_outlined, color: Colors.black38)
+            ? Icon(Icons.checkroom_outlined, color: c.mutedText)
             : Image.network(
                 url,
                 fit: BoxFit.cover,
                 alignment: Alignment.topCenter,
                 errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.checkroom_outlined, color: Colors.black38),
+                    Icon(Icons.checkroom_outlined, color: c.mutedText),
               ),
       ),
     );
   }
 
   Widget _buildComboButton() {
+    final cs = context.cs;
+    final c = context.appColors;
     final active = _selectedCombo != null;
+
     return GestureDetector(
       onTap: _chooseCombo,
       child: Container(
         height: 42,
         width: 42,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: c.card,
           shape: BoxShape.circle,
-          border: Border.all(color: active ? _primary : _border, width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
+          border: Border.all(color: active ? cs.primary : c.border, width: 2),
+          boxShadow: [BoxShadow(color: cs.shadow.withAlpha(31), blurRadius: 4)],
         ),
         child: Icon(
           Icons.layers_outlined,
           size: 20,
-          color: active ? _primary : Colors.black87,
+          color: active ? cs.primary : cs.onSurface,
         ),
       ),
     );
   }
 
   Widget _buildControls() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -553,11 +587,11 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
             height: 68,
             width: 68,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: c.card,
               shape: BoxShape.circle,
-              border: Border.all(color: _primary, width: 3),
+              border: Border.all(color: cs.primary, width: 3),
             ),
-            child: const Icon(Icons.photo_camera, color: _primary, size: 28),
+            child: Icon(Icons.photo_camera, color: cs.primary, size: 28),
           ),
         ),
         _roundButton(Icons.refresh, 'Start over', _resetAll),
@@ -566,6 +600,9 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
   }
 
   Widget _roundButton(IconData icon, String tooltip, VoidCallback onTap) {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Tooltip(
       message: tooltip,
       child: InkWell(
@@ -576,35 +613,38 @@ class _ArTryOnScreenState extends State<ArTryOnScreen> {
           width: 48,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white,
-            border: Border.all(color: _border),
+            color: c.card,
+            border: Border.all(color: c.border),
           ),
-          child: Icon(icon, color: Colors.black87),
+          child: Icon(icon, color: cs.onSurface),
         ),
       ),
     );
   }
 
   Widget _buildMainButton() {
+    final cs = context.cs;
     final ready = _resultReady;
+
     return SizedBox(
       width: double.infinity,
       height: 48,
       child: FilledButton(
         style: FilledButton.styleFrom(
-          backgroundColor: _primary,
+          backgroundColor: cs.primary,
+          foregroundColor: cs.onPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
           ),
         ),
         onPressed: (_busy || _saving) ? null : (ready ? _saveLook : _tryOn),
         child: _saving
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  color: cs.onPrimary,
                 ),
               )
             : Text(
@@ -627,6 +667,8 @@ class _ComboPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final c = context.appColors;
     final maxHeight = MediaQuery.of(context).size.height * 0.5;
 
     return SafeArea(
@@ -636,22 +678,26 @@ class _ComboPickerSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Try a full combo',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'See the whole outfit on you at once.',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
+              style: TextStyle(fontSize: 13, color: c.mutedText),
             ),
             const SizedBox(height: 12),
             if (combos.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   'You have no combos yet. Add products to a combo first.',
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: c.mutedText),
                 ),
               )
             else
@@ -670,7 +716,7 @@ class _ComboPickerSheet extends StatelessWidget {
                     final selected = combo.id == selectedId;
 
                     return Material(
-                      color: Colors.white,
+                      color: cs.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
@@ -683,7 +729,7 @@ class _ComboPickerSheet extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: selected ? _primary : _border,
+                              color: selected ? cs.primary : c.border,
                               width: selected ? 2 : 1,
                             ),
                           ),
@@ -697,25 +743,26 @@ class _ComboPickerSheet extends StatelessWidget {
                                       combo.name,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
+                                        color: cs.onSurface,
                                       ),
                                     ),
                                     Text(
                                       enabled
                                           ? '$count ${count == 1 ? 'item' : 'items'}'
                                           : 'Empty combo',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.black54,
+                                        color: c.mutedText,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
                               if (selected)
-                                const Icon(Icons.check_circle, color: _primary),
+                                Icon(Icons.check_circle, color: cs.primary),
                             ],
                           ),
                         ),

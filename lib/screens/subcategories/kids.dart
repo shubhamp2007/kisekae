@@ -1,6 +1,5 @@
 import "package:flutter/material.dart";
 import "package:kisekae/screens/products_list.dart";
-import "package:kisekae/screens/search.dart";
 import "package:kisekae/widgets/bottom_bar.dart";
 import "package:kisekae/widgets/searchbar.dart";
 
@@ -66,6 +65,7 @@ class _KidsSubCategoriesScreenState extends State<KidsSubCategoriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -77,9 +77,13 @@ class _KidsSubCategoriesScreenState extends State<KidsSubCategoriesScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
@@ -229,6 +233,7 @@ class _KidsSubCategoriesScreenState extends State<KidsSubCategoriesScreen> {
   }
 
   Widget _buildFestive() {
+    final colors = Theme.of(context).colorScheme;
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -250,6 +255,7 @@ class _KidsSubCategoriesScreenState extends State<KidsSubCategoriesScreen> {
             ),
             const SizedBox(height: _bannerToBarGap),
             const SizedBox(height: 50),
+            // "Try now" band: intentionally a fixed brand gradient with light text
             GestureDetector(
               onTap: _openProducts,
               child: Container(
@@ -303,10 +309,7 @@ class _KidsSubCategoriesScreenState extends State<KidsSubCategoriesScreen> {
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: const Color(0xFF1E1A19),
-                          width: 1.5,
-                        ),
+                        border: Border.all(color: colors.onSurface, width: 1.5),
                       ),
                       child: _asset(_festiveCards[i]),
                     ),
@@ -340,14 +343,15 @@ class _KidsSubCategoriesScreenState extends State<KidsSubCategoriesScreen> {
   }
 
   Widget _asset(String path) {
+    final colors = Theme.of(context).colorScheme;
     return Image.asset(
       path,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
       errorBuilder: (_, __, ___) => Container(
-        color: const Color(0xFFE0D8CD),
-        child: const Icon(Icons.image, size: 36, color: Colors.black38),
+        color: colors.outlineVariant,
+        child: Icon(Icons.image, size: 36, color: colors.outline),
       ),
     );
   }
@@ -393,6 +397,7 @@ class _CategoryImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -408,7 +413,7 @@ class _CategoryImage extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 27,
-              backgroundColor: const Color(0xFFDBBEC3),
+              backgroundColor: colors.primary.withValues(alpha: 0.3),
               child: ClipOval(
                 child: Image.asset(
                   imageUrl,

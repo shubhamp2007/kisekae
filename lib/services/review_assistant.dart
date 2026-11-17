@@ -5,7 +5,7 @@ import 'package:kisekae/services/dio.dart';
 import 'package:kisekae/services/helper.dart';
 
 class ReviewAssistant extends BaseRepository {
-  static const int maxHistoryMessages = 10;
+  static const int maxHistoryMessages = 3;
 
   final Dio _dio;
 

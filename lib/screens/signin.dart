@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kisekae/models/auth_response.dart';
-import 'package:kisekae/screens/forgot_password.dart';
-import 'package:kisekae/screens/home_screen.dart';
 import 'package:kisekae/screens/password.dart';
-import 'package:kisekae/screens/seller_gate_screen.dart';
-import 'package:kisekae/screens/seller_onboarding_screen.dart';
-import 'package:kisekae/screens/signin_otp.dart';
-import 'package:kisekae/screens/verify_code.dart';
-import 'package:kisekae/services/email_auth.dart';
 import 'package:kisekae/services/oauth.dart';
 import 'package:kisekae/services/post_auth.dart';
 
@@ -41,123 +34,6 @@ class _SigninState extends State<Signin> {
       );
     }
   }
-  /*Future<void> _submitForm() async {
-    if (_loading || _isOauthLoading) return;
-    if (_form.currentState!.validate()) {
-      setState(() => _loading = true);
-      try {
-        final email = _emailController.text.trim();
-
-        final response = await EmailAuth().signIn(
-          email,
-          _passwordController.text,
-        );
-        if (!mounted) return;
-        if (response.success) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-            (route) => false,
-          );
-          return;
-        }
-        if (response.message.toLowerCase().contains("email is not verified")) {
-          final otpResponse = await EmailAuth().sendOtp(
-            email,
-            purpose: "verify_email",
-          );
-          if (!mounted) return;
-          if (otpResponse.message.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(otpResponse.message),
-                backgroundColor: otpResponse.success
-                    ? Colors.green
-                    : Colors.red,
-              ),
-            );
-          }
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => VerifyCodeScreen(email: email)),
-          );
-          return;
-        }
-        if (response.message.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(response.message),
-              backgroundColor: response.success ? Colors.green : Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _loading = false);
-      }
-    }
-  }*/
-
-  /*Future<void> _googleAuth() async {
-    if (_loading || _isOauthLoading) return;
-    setState(() => _isOauthLoading = true);
-    try {
-      final response = await SocialAuth().signInWithGoogle(
-        isSeller: widget.isSeller,
-      );
-      if (!mounted) return;
-      if (response.success) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                widget.isSeller ? const SellerGateScreen() : const HomeScreen(),
-          ),
-          (route) => false,
-        );
-      }
-      if (response.message.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isOauthLoading = false);
-    }
-  }
-
-  Future<void> _githubAuth() async {
-    if (_loading || _isOauthLoading) return;
-    setState(() => _isOauthLoading = true);
-    try {
-      final response = await SocialAuth().signInWithGitHub(
-        isSeller: widget.isSeller,
-      );
-      if (!mounted) return;
-      if (response.success) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                widget.isSeller ? const SellerGateScreen() : const HomeScreen(),
-          ),
-          (route) => false,
-        );
-      }
-      if (response.message.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isOauthLoading = false);
-    }
-  }*/
 
   Future<void> _oauth(
     Future<AuthResponse> Function({required bool isSeller}) signIn,
@@ -174,10 +50,14 @@ class _SigninState extends State<Signin> {
       }
 
       if (response.message.isNotEmpty) {
+        final scheme = Theme.of(context).colorScheme;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
-            backgroundColor: Colors.red,
+            content: Text(
+              response.message,
+              style: TextStyle(color: scheme.onError),
+            ),
+            backgroundColor: scheme.error,
           ),
         );
       }
@@ -212,9 +92,13 @@ class _SigninState extends State<Signin> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.transparent,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
@@ -256,179 +140,67 @@ class _SigninState extends State<Signin> {
                     },
                   ),
                   SizedBox(height: size.height * 0.16),
-                  /*_TextInput(
-                    label: 'Password',
-                    hint: 'Enter your password',
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    maxLength: 128,
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: Colors.black,
-                        size: 20,
+                  SizedBox(
+                    width: double.infinity,
+                    height: size.height * 0.065,
+                    child: FilledButton(
+                      onPressed: _isOauthLoading ? null : _continue,
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
+                      child: Text(
+                        'SIGN IN',
+                        style: TextStyle(fontSize: size.width * 0.04),
+                      ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 8) {
-                        return 'Password must be at least 8 characters';
-                      }
-                      if (value.length >= 128) {
-                        return 'You have reached the maximum limit';
-                      }
-                      final passwordRegex = RegExp(
-                        r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,128}$',
-                      );
-                      if (!passwordRegex.hasMatch(value)) {
-                        return 'Password must include a letter, a number, and a special character';
-                      }
-                      return null;
-                    },
-                  ),*/
-                  //SizedBox(height: 100),
+                  ),
+                  SizedBox(height: size.height * 0.1),
+                  Row(
+                    children: [
+                      Expanded(child: Divider()),
+                      SizedBox(width: 8),
+                      Text(
+                        "or signin with",
+                        style: TextStyle(fontSize: size.width * 0.04),
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(child: Divider()),
+                    ],
+                  ),
+                  SizedBox(height: size.height * 0.1),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: _isOauthLoading ? null : _googleAuth,
+                        child: CircleAvatar(
+                          radius: 32,
+                          // kept white on purpose: brand logos need a light backdrop
+                          backgroundColor: Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Image.asset('assets/icons/google.png'),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 24),
+                      GestureDetector(
+                        onTap: _isOauthLoading ? null : _githubAuth,
+                        child: CircleAvatar(
+                          radius: 32,
+                          backgroundColor: Colors.white,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Image.asset('assets/icons/github.png'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            ),
-            /*Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          ForgotPassword(email: _emailController.text.trim()),
-                    ),
-                  );
-                },
-                child: Text(
-                  'Forgot Password?',
-                  style: TextStyle(
-                    decoration: TextDecoration.underline,
-                    fontWeight: FontWeight.normal,
-                    fontSize: size.width * 0.04,
-                    color: colors.onSurface,
-                  ),
-                ),
-              ),
-            ),*/
-            SizedBox(
-              width: double.infinity,
-              height: size.height * 0.065,
-              child: FilledButton(
-                onPressed: _isOauthLoading ? null : _continue,
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: /*_loading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : */ Text(
-                  'SIGN IN',
-                  style: TextStyle(fontSize: size.width * 0.04),
-                ),
-              ),
-            ),
-            SizedBox(height: size.height * 0.1),
-            Row(
-              children: [
-                Expanded(child: Divider()),
-                SizedBox(width: 8),
-                Text(
-                  "or signin with",
-                  style: TextStyle(fontSize: size.width * 0.04),
-                ),
-                SizedBox(width: 8),
-                Expanded(child: Divider()),
-              ],
-            ),
-            SizedBox(height: size.height * 0.1),
-            /*SizedBox(
-              width: double.infinity,
-              height: size.height * 0.065,
-              child: OutlinedButton(
-                onPressed: (_loading || _isOauthLoading)
-                    ? null
-                    : () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                SigninOtp(email: _emailController.text.trim()),
-                          ),
-                        );
-                      },
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: colors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'Sign in with otp instead',
-                  style: TextStyle(fontSize: size.width * 0.04),
-                ),
-              ),
-            ),
-            SizedBox(height: size.height * 0.02),
-            Row(
-              children: [
-                Expanded(child: Divider()),
-                SizedBox(width: 8),
-                Text(
-                  "or sign in with",
-                  style: TextStyle(fontSize: size.width * 0.04),
-                ),
-                SizedBox(width: 8),
-                Expanded(child: Divider()),
-              ],
-            ),
-            SizedBox(height: size.height * 0.03),*/
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: _isOauthLoading ? null : _googleAuth,
-                  child: CircleAvatar(
-                    radius: 32,
-                    backgroundColor: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Image.asset('assets/icons/google.png'),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 24),
-                GestureDetector(
-                  onTap: _isOauthLoading ? null : _githubAuth,
-                  child: CircleAvatar(
-                    radius: 32,
-                    backgroundColor: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Image.asset('assets/icons/github.png'),
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -464,7 +236,7 @@ class _TextInput extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final simpleBlackBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(15),
-      borderSide: const BorderSide(color: Colors.black, width: 1),
+      borderSide: BorderSide(color: colors.onSurface, width: 1),
     );
 
     return Column(

@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/dashboard_model.dart';
 import 'package:kisekae/models/revenue_analytics.dart';
 import 'package:kisekae/services/analytics.dart';
@@ -91,12 +92,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8DF);
-    const primaryColor = Color(0xFF8B2E3E);
-    const cardBackgroundColor = Color(0xFFFFF8F0);
+    final colors = Theme.of(context).colorScheme;
+    final backgroundColor = colors.surface;
+    final primaryColor = colors.primary;
+    final cardBackgroundColor = context.appColors.card;
+    final borderColor = colors.outlineVariant;
 
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: backgroundColor,
         body: Center(child: CircularProgressIndicator(color: primaryColor)),
       );
@@ -111,27 +114,26 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         backgroundColor: backgroundColor,
         elevation: 0,
         centerTitle: true,
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Container(
+            padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black12),
+              color: Colors.transparent,
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Colors.black,
-                size: 16,
-              ),
-              onPressed: () => Navigator.pop(context),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           "Analytics",
           style: TextStyle(
-            color: Colors.black,
+            color: colors.onSurface,
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -152,18 +154,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Column(
                   children: [
                     SizedBox(
                       height: 200,
                       child: timeSeries.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
                                 "No revenue data points available",
                                 style: TextStyle(
-                                  color: Colors.black45,
+                                  color: colors.onSurfaceVariant,
                                   fontSize: 13,
                                 ),
                               ),
@@ -184,17 +186,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 decoration: BoxDecoration(
                   color: cardBackgroundColor,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE5DDD2)),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.1),
+                        color: primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.monetization_on_outlined,
                         color: primaryColor,
                         size: 28,
@@ -205,12 +207,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "Total sales",
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: colors.onSurface,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -219,7 +221,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                               metrics?.totalRevenue ?? 0.0,
                               metrics?.currency ?? 'INR',
                             ),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: primaryColor,
@@ -303,12 +305,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     required Color primaryColor,
     required Color cardBackgroundColor,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: cardBackgroundColor,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5DDD2)),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,10 +324,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: colors.onSurface,
                   ),
                 ),
               ),
@@ -336,10 +339,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF8B2E3E),
+              color: colors.primary,
             ),
           ),
         ],
@@ -351,6 +354,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     List<RevenueTimeSeriesPoint> timeSeries,
     Color primaryColor,
   ) {
+    final colors = Theme.of(context).colorScheme;
+    final cardColor = context.appColors.card;
+
     final spots = timeSeries.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value.revenue);
     }).toList();
@@ -367,7 +373,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         drawVerticalLine: false,
         horizontalInterval: maxY / 4,
         getDrawingHorizontalLine: (value) => FlLine(
-          color: Colors.black.withOpacity(0.06),
+          color: colors.onSurface.withValues(alpha: 0.08),
           strokeWidth: 1,
           dashArray: [4, 4],
         ),
@@ -386,7 +392,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             getTitlesWidget: (value, meta) {
               return Text(
                 value.toInt().toString(),
-                style: const TextStyle(color: Colors.black38, fontSize: 10),
+                style: TextStyle(
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.8),
+                  fontSize: 10,
+                ),
               );
             },
           ),
@@ -403,8 +412,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   padding: const EdgeInsets.only(top: 6.0),
                   child: Text(
                     _formatDateLabel(timeSeries[idx].date),
-                    style: const TextStyle(
-                      color: Colors.black54,
+                    style: TextStyle(
+                      color: colors.onSurfaceVariant,
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
                     ),
@@ -434,7 +443,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             getDotPainter: (spot, percent, barData, index) {
               return FlDotCirclePainter(
                 radius: 4,
-                color: const Color(0xFFFFF8F0),
+                color: cardColor,
                 strokeWidth: 2,
                 strokeColor: primaryColor,
               );
@@ -446,8 +455,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                primaryColor.withOpacity(0.4),
-                primaryColor.withOpacity(0.0),
+                primaryColor.withValues(alpha: 0.4),
+                primaryColor.withValues(alpha: 0.0),
               ],
             ),
           ),

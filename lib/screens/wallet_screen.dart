@@ -5,6 +5,7 @@ import 'package:kisekae/models/model.dart';
 import 'package:kisekae/services/storage.dart';
 import 'package:kisekae/services/wallet_service.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 
 const _months = [
   'Jan',
@@ -112,12 +113,21 @@ class _WalletScreenState extends State<WalletScreen> {
 
   void _snack(String text, {bool error = false}) {
     if (!mounted) return;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(text),
-          backgroundColor: error ? Colors.red : Colors.green,
+          content: Text(
+            text,
+            style: TextStyle(
+              color: error
+                  ? scheme.onError
+                  : (isDark ? Colors.black : Colors.white),
+            ),
+          ),
+          backgroundColor: error ? scheme.error : context.appColors.success,
         ),
       );
   }
@@ -543,23 +553,24 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _pendingBanner(ColorScheme cs, _PendingVerify p) {
+    final warn = context.appColors.warning;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBEFD5),
+        color: warn.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFB7791F)),
+        border: Border.all(color: warn),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: Color(0xFFB7791F)),
+          Icon(Icons.info_outline, color: warn),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'We could not confirm your payment of ${_inr(p.amount)} yet. '
               'Tap Retry. If it keeps failing, contact support with payment ID ${p.paymentId}.',
-              style: const TextStyle(fontSize: 12, color: Colors.black87),
+              style: TextStyle(fontSize: 12, color: cs.onSurface),
             ),
           ),
           TextButton(
@@ -616,9 +627,8 @@ class _TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final credit = txn.isCredit;
-    final bg = credit ? const Color(0xFFE3F2E5) : const Color(0xFFFBE3E3);
-    final fg = credit ? const Color(0xFF2E7D32) : const Color(0xFFC62828);
-
+    final fg = credit ? context.appColors.success : cs.error;
+    final bg = fg.withValues(alpha: 0.15);
     final title = txn.description.isNotEmpty
         ? txn.description
         : (credit ? 'Money added' : 'Order payment');
@@ -630,9 +640,9 @@ class _TransactionTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9F2),
+        color: context.appColors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFB78876)),
+        border: Border.all(color: context.appColors.border),
       ),
       child: Row(
         children: [
@@ -816,8 +826,8 @@ class _AddMoneySheetState extends State<_AddMoneySheet> {
                     ActionChip(
                       label: Text(_inr(q, decimals: false)),
                       onPressed: () => _controller.text = q.toStringAsFixed(0),
-                      backgroundColor: const Color(0xFFFFF6EF),
-                      side: const BorderSide(color: Color(0xFFB78876)),
+                      backgroundColor: context.appColors.card,
+                      side: BorderSide(color: context.appColors.border),
                       labelStyle: TextStyle(
                         color: cs.primary,
                         fontWeight: FontWeight.w500,

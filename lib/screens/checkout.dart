@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/cart.dart';
 import 'package:kisekae/models/checkout.dart';
@@ -33,7 +34,6 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  static const Color _primaryColor = Color(0xFF8B2E3E);
   static const int _estimatedDeliveryDays = 5;
 
   static const List<_PaymentMethod> _paymentMethods = [
@@ -248,6 +248,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   void _openRazorpay(CheckoutOrder order) {
     final amountInPaise = (double.tryParse(order.totalAmount) ?? 0) * 100;
+    final primaryHex = (context.cs.primary.value & 0xFFFFFF)
+        .toRadixString(16)
+        .padLeft(6, '0')
+        .toUpperCase();
 
     final options = <String, dynamic>{
       'key': _razorpayKey,
@@ -257,7 +261,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'name': 'KiseKae',
       'description': 'Order #${order.orderNumber}',
       'prefill': {'contact': '', 'email': ''},
-      'theme': {'color': '#8B2E3E'},
+      'theme': {'color': '#$primaryHex'},
     };
 
     try {
@@ -347,6 +351,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+
     return PopScope(
       canPop: _currentPage == 0,
       onPopInvokedWithResult: (didPop, _) {
@@ -361,15 +367,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.transparent,
-                border: Border.all(color: Colors.black, width: 2),
+                border: Border.all(color: cs.onSurface, width: 2),
               ),
-              child: const Icon(Icons.arrow_back_ios_new, size: 18),
+              child: Icon(
+                Icons.arrow_back_ios_new,
+                size: 18,
+                color: cs.onSurface,
+              ),
             ),
           ),
           centerTitle: true,
-          title: const Text(
+          title: Text(
             "CHECKOUT",
-            style: TextStyle(fontWeight: FontWeight.w600),
+            style: TextStyle(fontWeight: FontWeight.w600, color: cs.onSurface),
           ),
         ),
         body: SafeArea(
@@ -400,8 +410,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: OutlinedButton(
                       onPressed: _goToTrackOrder,
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: _primaryColor,
-                        side: const BorderSide(color: _primaryColor),
+                        foregroundColor: cs.primary,
+                        side: BorderSide(color: cs.primary),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
@@ -422,19 +432,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   width: double.infinity,
                   child: FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: _primaryColor,
-                      foregroundColor: Colors.white,
+                      backgroundColor: cs.primary,
+                      foregroundColor: cs.onPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
                     onPressed: _isPlacingOrder ? null : _onContinue,
                     child: _isPlacingOrder
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: cs.onPrimary,
                               strokeWidth: 2,
                             ),
                           )
@@ -462,6 +472,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildStepper() {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Row(
@@ -469,10 +482,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           for (var i = 0; i < 3; i++) ...[
             if (i > 0)
-              const Expanded(
+              Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: Divider(color: _primaryColor, thickness: 2),
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Divider(color: cs.primary, thickness: 2),
                 ),
               ),
             Column(
@@ -480,27 +493,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 CircleAvatar(
                   radius: 18,
                   backgroundColor: i < _currentPage
-                      ? _primaryColor
+                      ? cs.primary
                       : i == _currentPage
-                      ? const Color(0xFFDBBEC3)
-                      : Colors.white,
+                      ? Color.alphaBlend(cs.primary.withAlpha(51), cs.surface)
+                      : c.card,
                   child: i < _currentPage
-                      ? const Icon(Icons.check, color: Colors.white, size: 18)
+                      ? Icon(Icons.check, color: cs.onPrimary, size: 18)
                       : Text(
                           '${i + 1}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            color: Colors.black,
-                          ),
+                          style: TextStyle(fontSize: 18, color: cs.onSurface),
                         ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   ['Review', 'Payment', 'Order\nconfirm'][i],
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: cs.onSurface,
                   ),
                 ),
               ],
@@ -512,13 +523,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _buildReviewPage() {
+    final cs = context.cs;
     final addressTitle = _selectedAddress?.title.trim() ?? '';
 
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Order summary', style: TextStyle(fontSize: 16)),
+          Text(
+            'Order summary',
+            style: TextStyle(fontSize: 16, color: cs.onSurface),
+          ),
           const SizedBox(height: 8),
           for (final item in widget.cart.items) ...[
             _productCard(item),
@@ -530,17 +545,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
+              color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
             child: _isLoadingAddress
-                ? const Center(
+                ? Center(
                     child: SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: _primaryColor,
+                        color: cs.primary,
                       ),
                     ),
                   )
@@ -568,6 +583,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _buildPaymentPage() {
     final hasWalletBalance = _wallet != null && _wallet!.balance > 0;
+    final cs = context.cs;
+    final c = context.appColors;
 
     return SingleChildScrollView(
       child: Column(
@@ -668,6 +685,47 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ],
                       ),
+          for (var i = 0; i < _paymentMethods.length; i++)
+            GestureDetector(
+              onTap: () => setState(() => _selectedMethod = i),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: c.card,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _selectedMethod == i ? cs.primary : c.border,
+                    width: _selectedMethod == i ? 1.5 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: _paymentMethods[i].iconAsset != null
+                          ? Image.asset(_paymentMethods[i].iconAsset!)
+                          : null,
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Text(
+                        _paymentMethods[i].label,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _selectedMethod == i
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      color: _selectedMethod == i ? cs.primary : c.mutedText,
                     ),
                   ],
                 ],
@@ -771,12 +829,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ],
             ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline, size: 14, color: c.mutedText),
+              const SizedBox(width: 4),
+              Text(
+                'Secured by Razorpay',
+                style: TextStyle(fontSize: 12, color: c.mutedText),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
   Widget _buildConfirmPage() {
+    final cs = context.cs;
     final orderNumbers =
         _result?.orders
             .map((o) => o.orderNumber)
@@ -787,30 +857,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 40,
-          backgroundColor: _primaryColor,
-          child: Icon(Icons.check, color: Colors.white, size: 40),
+          backgroundColor: cs.primary,
+          child: Icon(Icons.check, color: cs.onPrimary, size: 40),
         ),
         const SizedBox(height: 20),
-        const Text('Thank you!!', style: TextStyle(fontSize: 22)),
+        Text(
+          'Thank you!!',
+          style: TextStyle(fontSize: 22, color: cs.onSurface),
+        ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Your order has been placed successfully',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(fontSize: 16, color: cs.onSurface),
         ),
         const SizedBox(height: 24),
-        const Text('ORDER NUMBER', style: TextStyle(fontSize: 16)),
+        Text(
+          'ORDER NUMBER',
+          style: TextStyle(fontSize: 16, color: cs.onSurface),
+        ),
         const SizedBox(height: 4),
         Text(
           orderNumbers,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 20),
+          style: TextStyle(fontSize: 20, color: cs.onSurface),
         ),
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'You will receive an email with your order details',
-          style: TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14, color: cs.onSurface),
         ),
       ],
     );
@@ -818,6 +894,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _priceSummary() {
     final effectiveTotal = _useWallet ? _payableAmount : _totalAmount;
+    final cs = context.cs;
+    final c = context.appColors;
     final rows = [
       ['MRP', '₹${_mrpTotal.toInt()}'],
       ['Discounts', '-₹${_discountTotal.toInt()}'],
@@ -830,7 +908,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0E0E0),
+        color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -844,6 +922,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Text(
                     row[0],
                     style: TextStyle(
+                      color: cs.onSurface,
                       fontWeight: row[0] == 'Total amount'
                           ? FontWeight.w700
                           : FontWeight.w500,
@@ -857,6 +936,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               row[0] == 'Wallet balance applied')
                           ? Colors.green
                           : null,
+                      color: row[0] == 'Discounts' ? c.success : cs.onSurface,
                       fontWeight: row[0] == 'Total amount'
                           ? FontWeight.w700
                           : FontWeight.w400,
@@ -871,6 +951,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Widget _infoRow(String label, String value) {
+    final onSurface = context.cs.onSurface;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -878,15 +960,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           width: 70,
           child: Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              color: onSurface,
+            ),
           ),
         ),
-        Expanded(child: Text(value, style: const TextStyle(fontSize: 15))),
+        Expanded(
+          child: Text(value, style: TextStyle(fontSize: 15, color: onSurface)),
+        ),
       ],
     );
   }
 
   Widget _productCard(CartItem item) {
+    final cs = context.cs;
+    final c = context.appColors;
     final imagePath =
         item.product.imageUrl ??
         item.product.thumbnail ??
@@ -895,9 +985,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F0),
+        color: c.card,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFD3C7B8)),
+        border: Border.all(color: c.border),
       ),
       child: Row(
         children: [
@@ -907,7 +997,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(24)),
             foregroundDecoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _primaryColor, width: 1),
+              border: Border.all(color: cs.primary, width: 1),
             ),
             clipBehavior: Clip.antiAlias,
             child: imagePath.startsWith('http')
@@ -935,21 +1025,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   item.product.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: cs.onSurface),
                 ),
                 const SizedBox(height: 4),
                 if (item.size.isNotEmpty)
                   Text(
                     'Size - ${item.size}',
-                    style: const TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16, color: cs.onSurface),
                   ),
                 Text(
                   'Price - ₹${item.product.price}',
-                  style: const TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: cs.onSurface),
                 ),
                 Text(
                   'Quantity - ${item.quantity}',
-                  style: const TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: cs.onSurface),
                 ),
               ],
             ),

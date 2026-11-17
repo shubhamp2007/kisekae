@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:kisekae/core/notifications/notification_service.dart';
+import 'package:kisekae/models/buyer_seasonal_sale.dart';
 import 'package:kisekae/screens/addresses.dart';
 import 'package:kisekae/screens/categories.dart';
 import 'package:kisekae/screens/products_list.dart';
@@ -10,8 +11,8 @@ import 'package:kisekae/screens/subcategories/kids.dart';
 import 'package:kisekae/screens/subcategories/mens.dart';
 import 'package:kisekae/screens/subcategories/womens.dart';
 import 'package:kisekae/screens/wishlist_screen.dart';
+import 'package:kisekae/services/buyer_seasonal_service.dart';
 import 'package:kisekae/services/dio.dart';
-import 'package:kisekae/services/profile_details.dart';
 import 'package:kisekae/widgets/best_deals.dart';
 import 'package:kisekae/widgets/bottom_bar.dart';
 import 'package:kisekae/widgets/searchbar.dart';
@@ -25,6 +26,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   StreamSubscription? _subscription;
+  final SeasonalSales _seasonalSalesRepo = SeasonalSales();
+  final PageController _bannerPageController = PageController();
+
+  List<SeasonalSale> _ongoingSales = [];
+  int _currentBannerIndex = 0;
 
   final List<String> brandImages = [
     'assets/images/brands/deals1.png',
@@ -35,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _loadOngoingSales();
     _subscription = NotificationService().onTap.listen(_handleDeepLink);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final pending = NotificationService().consumePendingDeepLink();
@@ -42,9 +49,23 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _loadOngoingSales() async {
+    try {
+      final sales = await _seasonalSalesRepo.getSales();
+      if (!mounted) return;
+      final liveSales = sales.where((s) => s.isLive).toList();
+      setState(() {
+        _ongoingSales = liveSales.isNotEmpty ? liveSales : sales;
+      });
+    } catch (e) {
+      debugPrint('Failed to load ongoing seasonal sales: $e');
+    }
+  }
+
   @override
   void dispose() {
     _subscription?.cancel();
+    _bannerPageController.dispose();
     super.dispose();
   }
 
@@ -70,8 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _wishlistButton() {
+    final colors = Theme.of(context).colorScheme;
     return Material(
-      color: const Color(0xFF8B2E3E),
+      color: colors.primary,
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -79,22 +101,137 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const WishlistScreen()));
         },
-        child: const SizedBox(
+        child: SizedBox(
           height: 37,
           width: 37,
-          child: Icon(Icons.favorite, color: Color(0xFFDBBEC3), size: 22),
+          child: Icon(
+            Icons.favorite,
+            color: colors.onPrimary.withValues(alpha: 0.8),
+            size: 22,
+          ),
         ),
       ),
     );
   }
 
-  void _openSeasonSale() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const SeasonSaleScreen()));
+  void _openSeasonSale(SeasonalSale? sale) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => sale != null
+            ? SeasonSaleScreen(
+                seasonalSale: sale,
+                title: sale.title,
+                subtitle: sale.description,
+              )
+            : const SeasonSaleScreen(),
+      ),
+    );
+  }
+
+  Widget _buildSaleBannerCarousel(ColorScheme colors) {
+    if (_ongoingSales.isEmpty) {
+      return GestureDetector(
+        onTap: () => _openSeasonSale(null),
+        child: Container(
+          width: double.infinity,
+          height: 250,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: colors.outlineVariant, width: 1),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.asset('assets/images/banner.png', fit: BoxFit.cover),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 250,
+          child: PageView.builder(
+            controller: _bannerPageController,
+            itemCount: _ongoingSales.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentBannerIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final sale = _ongoingSales[index];
+              final discountNum = double.tryParse(sale.discountPercentage) ?? 0;
+              final discountText = discountNum == discountNum.roundToDouble()
+                  ? '${discountNum.toInt()}% OFF'
+                  : '$discountNum% OFF';
+              return Padding(
+                padding: EdgeInsets.only(
+                  right: _ongoingSales.length > 1 ? 6.0 : 0,
+                ),
+                child: GestureDetector(
+                  onTap: () => _openSeasonSale(sale),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: colors.outlineVariant,
+                        width: 1,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          sale.bannerImage.isNotEmpty
+                              ? Image.network(
+                                  sale.bannerImage,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Image.asset(
+                                    'assets/images/banner.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Image.asset(
+                                  'assets/images/banner.png',
+                                  fit: BoxFit.cover,
+                                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (_ongoingSales.length > 1) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_ongoingSales.length, (index) {
+              final isSelected = index == _currentBannerIndex;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isSelected ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isSelected ? colors.primary : colors.outlineVariant,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 118,
@@ -109,12 +246,12 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Row(
                 children: [
-                  const Text(
+                  Text(
                     "KISEKAE",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF7D2938),
+                      color: colors.primary,
                       fontFamily: 'serif',
                     ),
                   ),
@@ -166,27 +303,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: _openSeasonSale,
-                    child: Container(
-                      width: 370,
-                      height: 250,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: const Color(0xFFE5DDD3),
-                          width: 1,
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.asset(
-                          'assets/images/banner.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildSaleBannerCarousel(colors),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -307,14 +424,14 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 6),
             Column(
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     "Brands To Explore",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: colors.onSurface,
                     ),
                   ),
                 ),
@@ -368,7 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        'Best Deals',
+                        'Recommended for you',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -415,6 +532,7 @@ class _CategoryImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -424,7 +542,7 @@ class _CategoryImage extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 27,
-              backgroundColor: const Color(0xFFDBBEC3),
+              backgroundColor: colors.primary.withValues(alpha: 0.3),
               child: ClipOval(
                 child: Image.asset(
                   imageUrl,

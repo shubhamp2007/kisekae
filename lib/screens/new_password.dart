@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/services/email_auth.dart';
 
 class NewPasswordScreen extends StatefulWidget {
@@ -43,10 +44,17 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
         Navigator.popUntil(context, (route) => count++ >= 3);
       }
       if (response.message.isNotEmpty) {
+        final bg = response.success
+            ? context.appColors.success
+            : context.cs.error;
+        final fg = ThemeData.estimateBrightnessForColor(bg) == Brightness.dark
+            ? Colors.white
+            : Colors.black;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message),
-            backgroundColor: response.success ? Colors.green : Colors.red,
+            content: Text(response.message, style: TextStyle(color: fg)),
+            backgroundColor: bg,
           ),
         );
       }
@@ -57,10 +65,10 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final blackBorder = OutlineInputBorder(
+    final colors = context.cs;
+    final fieldBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Colors.black, width: 1),
+      borderSide: BorderSide(color: colors.onSurface, width: 1),
     );
 
     return Scaffold(
@@ -71,15 +79,22 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.black, width: 2),
+              border: Border.all(color: colors.onSurface, width: 2),
             ),
-            child: const Icon(Icons.arrow_back_ios_new, size: 18),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: colors.onSurface,
+            ),
           ),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           "Reset Password",
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: colors.onSurface,
+          ),
         ),
       ),
       body: SafeArea(
@@ -92,12 +107,15 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Enter your new password",
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16, color: colors.onSurface),
                   ),
                   const SizedBox(height: 24),
-                  const Text("Password", style: TextStyle(fontSize: 16)),
+                  Text(
+                    "Password",
+                    style: TextStyle(fontSize: 16, color: colors.onSurface),
+                  ),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _passwordController,
@@ -106,6 +124,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                     maxLength: 128,
                     maxLengthEnforcement: MaxLengthEnforcement.enforced,
                     textInputAction: TextInputAction.next,
+                    style: TextStyle(color: colors.onSurface),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a new password';
@@ -133,15 +152,15 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                       counterText: '',
                       filled: true,
                       fillColor: colors.surfaceContainerHighest,
-                      border: blackBorder,
-                      enabledBorder: blackBorder,
-                      focusedBorder: blackBorder,
+                      border: fieldBorder,
+                      enabledBorder: fieldBorder,
+                      focusedBorder: fieldBorder,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: Colors.black,
+                          color: colors.onSurface,
                           size: 20,
                         ),
                         onPressed: () {
@@ -153,9 +172,9 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     "Confirm Password",
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16, color: colors.onSurface),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -165,6 +184,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                     maxLength: 128,
                     maxLengthEnforcement: MaxLengthEnforcement.enforced,
                     textInputAction: TextInputAction.done,
+                    style: TextStyle(color: colors.onSurface),
                     onFieldSubmitted: (_) => _handleResetPassword(),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -184,15 +204,15 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                       counterText: '',
                       filled: true,
                       fillColor: colors.surfaceContainerHighest,
-                      border: blackBorder,
-                      enabledBorder: blackBorder,
-                      focusedBorder: blackBorder,
+                      border: fieldBorder,
+                      enabledBorder: fieldBorder,
+                      focusedBorder: fieldBorder,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureConfirmPassword
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: Colors.black,
+                          color: colors.onSurface,
                           size: 20,
                         ),
                         onPressed: () {
@@ -210,17 +230,19 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                     child: FilledButton(
                       onPressed: _resetting ? null : _handleResetPassword,
                       style: FilledButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: _resetting
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 22,
                               width: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.5,
-                                color: Colors.white,
+                                color: colors.onPrimary,
                               ),
                             )
                           : const Text(

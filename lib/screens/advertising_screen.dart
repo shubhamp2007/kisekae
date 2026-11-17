@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/advertising.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/screens/promote_product.dart';
@@ -51,12 +52,21 @@ class _AdvertisementScreenState extends State<AdvertisementScreen> {
 
   void _snack(String text, {bool error = false}) {
     if (!mounted) return;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(text),
-          backgroundColor: error ? Colors.red : Colors.green,
+          content: Text(
+            text,
+            style: TextStyle(
+              color: error
+                  ? scheme.onError
+                  : (isDark ? Colors.black : Colors.white),
+            ),
+          ),
+          backgroundColor: error ? scheme.error : context.appColors.success,
         ),
       );
   }
@@ -297,7 +307,7 @@ class _AdvertisementScreenState extends State<AdvertisementScreen> {
             child: FilledButton(
               onPressed: _openPromote,
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFFFF9F2),
+                backgroundColor: cs.onPrimary,
                 foregroundColor: cs.primary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -579,7 +589,7 @@ class _AdvertisementScreenState extends State<AdvertisementScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9F2),
+        color: context.appColors.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -612,13 +622,13 @@ class _CampaignCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final p = product;
     final statusColor = p.isActive
-        ? const Color(0xFF2E7D32)
-        : const Color(0xFF8D6E63);
+        ? context.appColors.success
+        : cs.onSurfaceVariant;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 10, 6, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF9F2),
+        color: context.appColors.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -649,15 +659,34 @@ class _CampaignCard extends StatelessWidget {
                 p.isActive ? 'Running' : 'Paused',
                 style: TextStyle(fontSize: 12, color: statusColor),
               ),
-              PopupMenuButton<String>(
-                enabled: !busy,
-                icon: const Icon(Icons.more_vert, size: 20),
-                padding: EdgeInsets.zero,
-                onSelected: (_) => onRemove(),
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: 'remove', child: Text('Remove')),
-                ],
-              ),
+              if (busy)
+                const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              else
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, size: 20),
+                  padding: EdgeInsets.zero,
+                  onSelected: (value) {
+                    if (value == 'toggle') onToggle(!p.isActive);
+                    if (value == 'remove') onRemove();
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'toggle',
+                      child: Text(p.isActive ? 'Pause' : 'Run'),
+                    ),
+                    const PopupMenuItem(value: 'remove', child: Text('Remove')),
+                  ],
+                ),
             ],
           ),
           Row(
@@ -666,7 +695,7 @@ class _CampaignCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0C3C7),
+                  color: cs.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.checkroom, color: cs.primary),
@@ -695,21 +724,6 @@ class _CampaignCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (busy)
-                const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              else
-                Switch(
-                  value: p.isActive,
-                  onChanged: onToggle,
-                  activeThumbColor: cs.primary,
-                ),
             ],
           ),
         ],

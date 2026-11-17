@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/dashboard_model.dart';
 import 'package:kisekae/models/revenue_analytics.dart';
 import 'package:kisekae/services/dio.dart';

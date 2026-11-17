@@ -1,15 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/tryon_combo_model.dart';
 import 'package:kisekae/screens/product_screen.dart';
 import 'package:kisekae/services/tryon_service.dart';
 import 'package:kisekae/widgets/combo_helper.dart';
-
-const _bg = Color(0xFFEFE8DF);
-const _primary = Color(0xFF8B2E3E);
-const _card = Color(0xFFFBF8F5);
-const _border = Color(0xFFD3C7B8);
 
 class CombosScreen extends StatefulWidget {
   const CombosScreen({super.key});
@@ -64,19 +60,24 @@ class _CombosScreenState extends State<CombosScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFFF8F0),
-        title: const Text('Delete combo?'),
+        backgroundColor: ctx.appColors.card,
+        surfaceTintColor: Colors.transparent,
+        title: Text('Delete combo?', style: TextStyle(color: ctx.cs.onSurface)),
         content: Text(
           '"${combo.name}" will be removed. This can\'t be undone.',
+          style: TextStyle(color: ctx.cs.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: ctx.appColors.mutedText),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('Delete', style: TextStyle(color: ctx.cs.error)),
           ),
         ],
       ),
@@ -99,16 +100,34 @@ class _CombosScreenState extends State<CombosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: cs.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        foregroundColor: Colors.black,
-        title: const Text(
+        foregroundColor: cs.onSurface,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.transparent,
+              border: Border.all(color: cs.onSurface, width: 2),
+            ),
+            child: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: cs.onSurface,
+            ),
+          ),
+        ),
+        title: Text(
           'My Combos',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: cs.onSurface),
         ),
       ),
       body: _buildBody(),
@@ -116,8 +135,10 @@ class _CombosScreenState extends State<CombosScreen> {
   }
 
   Widget _buildBody() {
+    final cs = context.cs;
+
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: _primary));
+      return Center(child: CircularProgressIndicator(color: cs.primary));
     }
 
     if (_error != null && _combos.isEmpty) {
@@ -138,7 +159,8 @@ class _CombosScreenState extends State<CombosScreen> {
     }
 
     return RefreshIndicator(
-      color: _primary,
+      color: cs.primary,
+      backgroundColor: context.appColors.card,
       onRefresh: () => _load(showSpinner: false),
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -162,14 +184,16 @@ class _ComboCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final c = context.appColors;
     final items = combo.itemViews;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _card,
+        color: c.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _border),
+        border: Border.all(color: c.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,18 +208,16 @@ class _ComboCard extends StatelessWidget {
                       combo.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${items.length} ${items.length == 1 ? 'item' : 'items'}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
-                      ),
+                      style: TextStyle(fontSize: 12, color: c.mutedText),
                     ),
                   ],
                 ),
@@ -203,15 +225,15 @@ class _ComboCard extends StatelessWidget {
               IconButton(
                 tooltip: 'Delete combo',
                 onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                icon: Icon(Icons.delete_outline, color: cs.error),
               ),
             ],
           ),
           const SizedBox(height: 10),
           if (items.isEmpty)
-            const Text(
+            Text(
               'This combo is empty',
-              style: TextStyle(fontSize: 13, color: Colors.black45),
+              style: TextStyle(fontSize: 13, color: c.mutedText),
             )
           else
             SizedBox(
@@ -245,7 +267,15 @@ class _ItemThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final c = context.appColors;
     final url = item.imageUrl;
+
+    final placeholder = Icon(
+      Icons.image_not_supported_outlined,
+      color: c.mutedText,
+    );
+
     return GestureDetector(
       onTap: onTap,
       child: ClipRRect(
@@ -253,20 +283,14 @@ class _ItemThumb extends StatelessWidget {
         child: Container(
           width: 72,
           height: 84,
-          color: const Color(0xFFE0D8CD),
+          color: cs.surfaceContainerHighest,
           child: (url == null || url.isEmpty)
-              ? const Icon(
-                  Icons.image_not_supported_outlined,
-                  color: Colors.black38,
-                )
+              ? placeholder
               : Image.network(
                   url,
                   fit: BoxFit.cover,
                   alignment: Alignment.topCenter,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.image_not_supported_outlined,
-                    color: Colors.black38,
-                  ),
+                  errorBuilder: (_, __, ___) => placeholder,
                 ),
         ),
       ),
@@ -291,31 +315,41 @@ class _Message extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.cs;
+    final c = context.appColors;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: _primary.withOpacity(0.6)),
+            Icon(icon, size: 56, color: cs.primary.withAlpha(153)),
             const SizedBox(height: 12),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: cs.onSurface,
+              ),
             ),
             if (subtitle != null) ...[
               const SizedBox(height: 6),
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                style: TextStyle(fontSize: 14, color: c.mutedText),
               ),
             ],
             if (actionLabel != null) ...[
               const SizedBox(height: 16),
               FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: _primary),
+                style: FilledButton.styleFrom(
+                  backgroundColor: cs.primary,
+                  foregroundColor: cs.onPrimary,
+                ),
                 onPressed: onAction,
                 child: Text(actionLabel!),
               ),

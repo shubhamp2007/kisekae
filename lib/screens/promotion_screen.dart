@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kisekae/core/notifications/theme/app_theme.dart';
 import 'package:kisekae/models/advertising.dart';
 import 'package:kisekae/models/api_exception.dart';
 import 'package:kisekae/models/seasonal_sale_seller.dart';
@@ -150,7 +151,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
   Widget _tabChip(ColorScheme cs, int index) {
     final selected = index == _tab;
     return Material(
-      color: selected ? cs.primary : const Color(0xFFFFF6EF),
+      color: selected ? cs.primary : context.appColors.card,
       shape: const StadiumBorder(),
       child: InkWell(
         customBorder: const StadiumBorder(),
@@ -258,7 +259,7 @@ class _PromotionsScreenState extends State<PromotionsScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF6EF),
+        color: context.appColors.card,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
