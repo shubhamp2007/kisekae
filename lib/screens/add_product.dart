@@ -449,72 +449,39 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  if (isLast) ...[
-                    SizedBox(
-                      height: 48,
-                      width: 72,
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: cs.primary,
-                          backgroundColor: cs.surfaceContainerHighest,
-                          padding: EdgeInsets.zero,
-                          side: BorderSide(color: cs.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        onPressed: _isSubmitting
-                            ? null
-                            : () => _submit('DRAFT'),
-                        child: const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.bookmark, size: 20),
-                            Text('Save', style: TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          backgroundColor: cs.primary,
-                          foregroundColor: cs.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        onPressed: _isSubmitting
-                            ? null
-                            : isLast
-                            ? () => _submit('ACTIVE')
-                            : _goToNext,
-                        child: _isSubmitting
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: cs.onPrimary,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                isLast ? 'PUBLISH PRODUCT' : 'CONTINUE',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                      ),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    foregroundColor: cs.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                ],
+                  onPressed: _isSubmitting
+                      ? null
+                      : isLast
+                      ? () => _submit('ACTIVE')
+                      : _goToNext,
+                  child: _isSubmitting
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: cs.onPrimary,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          isLast ? 'PUBLISH PRODUCT' : 'CONTINUE',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
               ),
             ],
           ),
