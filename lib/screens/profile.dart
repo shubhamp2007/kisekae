@@ -271,17 +271,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             actionChip(
-              Icons.description_outlined,
-              "Terms & conditions",
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const TermsScreen()),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            actionChip(
               Icons.meeting_room_outlined,
               "Logout",
               isLoading: _isLoggingOut,
