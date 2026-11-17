@@ -598,7 +598,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 color: const Color(0xFFFFF9F2),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: _useWallet ? _primaryColor : const Color(0xFFD3C7B8),
+                  color: _useWallet ? cs.primary : const Color(0xFFD3C7B8),
                   width: _useWallet ? 1.5 : 1,
                 ),
               ),
@@ -611,12 +611,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: _primaryColor.withOpacity(0.12),
+                          color: cs.primary.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.account_balance_wallet_outlined,
-                          color: _primaryColor,
+                          color: cs.primary,
                           size: 20,
                         ),
                       ),
@@ -645,7 +645,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       Switch.adaptive(
                         value: _useWallet,
-                        activeColor: _primaryColor,
+                        activeColor: cs.primary,
                         onChanged: (val) {
                           setState(() => _useWallet = val);
                         },
@@ -685,47 +685,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ],
                       ),
-          for (var i = 0; i < _paymentMethods.length; i++)
-            GestureDetector(
-              onTap: () => setState(() => _selectedMethod = i),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: c.card,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _selectedMethod == i ? cs.primary : c.border,
-                    width: _selectedMethod == i ? 1.5 : 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: _paymentMethods[i].iconAsset != null
-                          ? Image.asset(_paymentMethods[i].iconAsset!)
-                          : null,
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Text(
-                        _paymentMethods[i].label,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: cs.onSurface,
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      _selectedMethod == i
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                      color: _selectedMethod == i ? cs.primary : c.mutedText,
                     ),
                   ],
                 ],
@@ -818,28 +777,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           _priceSummary(),
           const SizedBox(height: 8),
           if (!_isFullyCoveredByWallet)
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.lock_outline, size: 14, color: Colors.grey),
-                SizedBox(width: 4),
+                Icon(Icons.lock_outline, size: 14, color: c.mutedText),
+                const SizedBox(width: 4),
                 Text(
                   'Secured by Razorpay',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12, color: c.mutedText),
                 ),
               ],
             ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 14, color: c.mutedText),
-              const SizedBox(width: 4),
-              Text(
-                'Secured by Razorpay',
-                style: TextStyle(fontSize: 12, color: c.mutedText),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -931,12 +879,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Text(
                     row[1],
                     style: TextStyle(
-                      color:
-                          (row[0] == 'Discounts' ||
+                      color: (row[0] == 'Discounts' ||
                               row[0] == 'Wallet balance applied')
                           ? Colors.green
-                          : null,
-                      color: row[0] == 'Discounts' ? c.success : cs.onSurface,
+                          : cs.onSurface,
                       fontWeight: row[0] == 'Total amount'
                           ? FontWeight.w700
                           : FontWeight.w400,

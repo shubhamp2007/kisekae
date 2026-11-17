@@ -1063,21 +1063,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         ),
                       );
                     },
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.view_in_ar,
-                      color: primaryColor,
+                      color: cs.primary,
                       size: 20,
                     ),
-                    label: const Text(
+                    label: Text(
                       "AR Try On",
                       style: TextStyle(
-                        color: primaryColor,
+                        color: cs.primary,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: primaryColor, width: 1.5),
+                      side: BorderSide(color: cs.primary, width: 1.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),

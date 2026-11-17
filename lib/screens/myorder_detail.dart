@@ -250,11 +250,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           SnackBar(
             content: Text('Failed to request refund: ${e.toString()}'),
             backgroundColor: Colors.red,
-            content: Text(
-              'Failed to cancel order: ${e.toString()}',
-              style: TextStyle(color: context.cs.onError),
-            ),
-            backgroundColor: context.cs.error,
           ),
         );
       }
@@ -318,6 +313,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final isDelivered = statusUpper == 'DELIVERED';
     final isRefundRequested = statusUpper == 'REFUND_REQUESTED';
     final isRefunded = statusUpper == 'REFUNDED';
+    final isCancelled = statusUpper == 'CANCELLED';
+
     Widget actionButtons;
 
     if (canCancelOrder) {
@@ -334,15 +331,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                side: const BorderSide(color: primaryColor),
+                side: BorderSide(color: cs.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 "Track order",
                 style: TextStyle(
-                  color: primaryColor,
+                  color: cs.primary,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -357,24 +354,24 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                   : null,
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                side: const BorderSide(color: primaryColor),
+                side: BorderSide(color: cs.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               child: _isCancelling
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: primaryColor,
+                        color: cs.primary,
                       ),
                     )
-                  : const Text(
+                  : Text(
                       "Cancel order",
                       style: TextStyle(
-                        color: primaryColor,
+                        color: cs.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -397,15 +394,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                side: const BorderSide(color: primaryColor),
+                side: BorderSide(color: cs.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 "Track order",
                 style: TextStyle(
-                  color: primaryColor,
+                  color: cs.primary,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -421,19 +418,19 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 side: BorderSide(
-                  color: isRefundRequested ? Colors.amber : primaryColor,
+                  color: isRefundRequested ? Colors.amber : cs.primary,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               child: _isRequestingRefund
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: primaryColor,
+                        color: cs.primary,
                       ),
                     )
                   : Text(
@@ -441,7 +438,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                       style: TextStyle(
                         color: isRefundRequested
                             ? Colors.amber.shade800
-                            : primaryColor,
+                            : cs.primary,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -469,16 +466,18 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 side: BorderSide(
                   color: statusUpper == 'CANCELLED'
                       ? Colors.black26
-                      : primaryColor,
+                      : cs.primary,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 "Track order",
                 style: TextStyle(
-                  color: primaryColor,
+                  color: statusUpper == 'CANCELLED'
+                      ? Colors.black38
+                      : cs.primary,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -514,7 +513,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         order.refundAmount != null &&
         order.refundAmount!.isNotEmpty &&
         order.refundAmount != '0';
-    final isCancelled = order.status.toUpperCase() == 'CANCELLED';
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -641,21 +639,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: statusUpper == 'CANCELLED'
-                                      ? Colors.red.shade700
+                                  color: isCancelled
+                                      ? cs.error
                                       : isRefundRequested
                                       ? Colors.amber.shade800
-                                      : primaryColor,
+                                      : cs.primary,
                                 ),
                               ),
-                        child: Text(
-                          order.status,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: isCancelled ? cs.error : cs.primary,
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -666,77 +656,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             const SizedBox(height: 16),
 
             actionButtons,
-
-            const SizedBox(height: 20),
-
-            const Text(
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: isCancelled
-                        ? null
-                        : () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    TrackOrderScreen(orderId: order.id),
-                              ),
-                            );
-                          },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: cs.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: Text(
-                      "Track order",
-                      style: TextStyle(
-                        color: cs.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: (canCancelOrder && !_isCancelling)
-                        ? _handleCancelOrder
-                        : null,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(
-                        color: canCancelOrder ? cs.primary : cs.outline,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: _isCancelling
-                        ? SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: cs.primary,
-                            ),
-                          )
-                        : Text(
-                            isCancelled ? "Cancelled" : "Cancel order",
-                            style: TextStyle(
-                              color: canCancelOrder ? cs.primary : c.mutedText,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
 
             const SizedBox(height: 20),
 
@@ -777,7 +696,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
             const SizedBox(height: 20),
 
-            const Text(
             // Pricing Details Section
             Text(
               "Pricing Details",
@@ -875,7 +793,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     bool isBold = false,
     Color? valueColor,
   }) {
-  Widget _pricingRow(String label, String value, {bool isBold = false}) {
     final onSurface = context.cs.onSurface;
 
     return Row(
@@ -894,8 +811,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: valueColor ?? Colors.black,
-            color: onSurface,
+            color: valueColor ?? onSurface,
           ),
         ),
       ],
